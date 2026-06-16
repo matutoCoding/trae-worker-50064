@@ -1,15 +1,32 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, Button } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import { View, Text, ScrollView, Button, Picker, Input } from '@tarojs/components';
+import Taro, { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
-import { rooms } from '@/data/orders';
-import { getStatusText } from '@/utils';
+import { useAppStore } from '@/store';
+import { getStatusText, formatDate } from '@/utils';
 import classnames from 'classnames';
 
 type FilterType = 'all' | 'clean' | 'dirty' | 'occupied' | 'maintenance';
 
 const RoomPage: React.FC = () => {
   const [filter, setFilter] = useState<FilterType>('all');
+  const [showCheckInModal, setShowCheckInModal] = useState(false);
+  const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
+  const [checkInForm, setCheckInForm] = useState({
+    guestName: '',
+    guestPhone: '',
+    checkInDate: formatDate(new Date()),
+    checkOutDate: formatDate(new Date(Date.now() + 86400000))
+  });
+
+  const rooms = useAppStore(state => state.rooms);
+  const updateRoomStatus = useAppStore(state => state.updateRoomStatus);
+  const batchCleanRooms = useAppStore(state => state.batchCleanRooms);
+  const hydrate = useAppStore(state => state.hydrate);
+
+  useDidShow(() => {
+    hydrate();
+  });
 
   const filters: { id: FilterType; name: string }[] = [
     { id: 'all', name: '全部' },
@@ -25,7 +42,7 @@ const RoomPage: React.FC = () => {
     const dirty = rooms.filter(r => r.status === 'dirty').length;
     const occupied = rooms.filter(r => r.status === 'occupied').length;
     return { total, clean, dirty, occupied };
-  }, []);
+  }, [rooms]);
 
   const filteredRooms = useMemo(() => {
     if (filter === 'all') return rooms;
@@ -45,28 +62,88 @@ const RoomPage: React.FC = () => {
 
   const handleRoomClick = useCallback((roomId: string) => {
     console.log('[Room] 点击房间:', roomId);
+    const room = rooms.find(r => r.id === roomId);
+    if (!room) return;
+
+    const itemList = ['查看详情'];
+    if (room.status === 'dirty') itemList.push('清洁完成');
+    if (room.status === 'clean') itemList.push('安排入住');
+    if (room.status !== 'maintenance') itemList.push('标记维修');
+    if (room.status === 'maintenance') itemList.push('取消维修');
+
     Taro.showActionSheet({
-      itemList: ['查看详情', '清洁完成', '安排入住', '标记维修'],
+      itemList,
       success: res => {
-        console.log('[Room] 操作选择:', res.tapIndex);
-        Taro.showToast({
-          title: '操作成功',
-          icon: 'success'
-        });
+        const action = itemList[res.tapIndex];
+        console.log('[Room] 操作选择:', action);
+
+        if (action === '清洁完成') {
+          updateRoomStatus(roomId, 'clean');
+          Taro.showToast({ title: '已标记为干净', icon: 'success' });
+        } else if (action === '安排入住') {
+          setSelectedRoomId(roomId);
+          setCheckInForm({
+            guestName: '',
+            guestPhone: '',
+            checkInDate: formatDate(new Date()),
+            checkOutDate: formatDate(new Date(Date.now() + 86400000))
+          });
+          setShowCheckInModal(true);
+        } else if (action === '标记维修') {
+          updateRoomStatus(roomId, 'maintenance');
+          Taro.showToast({ title: '已标记维修', icon: 'success' });
+        } else if (action === '取消维修') {
+          updateRoomStatus(roomId, 'clean');
+          Taro.showToast({ title: '已取消维修', icon: 'success' });
+        } else if (action === '查看详情') {
+          Taro.showModal({
+            title: `房间 ${room.roomNumber}`,
+            content: `房型: ${room.typeName}\n状态: ${getStatusText(room.status, 'room')}${room.guestName ? `\n客人: ${room.guestName}\n入住: ${room.checkInDate} ~ ${room.checkOutDate}` : ''}`,
+            showCancel: false
+          });
+        }
       },
       fail: err => {
         console.error('[Room] 操作失败:', err);
       }
     });
-  }, []);
+  }, [rooms, updateRoomStatus]);
+
+  const handleCheckInSubmit = useCallback(() => {
+    if (!checkInForm.guestName.trim()) {
+      Taro.showToast({ title: '请输入客人姓名', icon: 'none' });
+      return;
+    }
+    if (!checkInForm.guestPhone.trim()) {
+      Taro.showToast({ title: '请输入联系电话', icon: 'none' });
+      return;
+    }
+    if (!selectedRoomId) return;
+
+    updateRoomStatus(selectedRoomId, 'occupied', checkInForm);
+    setShowCheckInModal(false);
+    setSelectedRoomId(null);
+    Taro.showToast({ title: '入住登记成功', icon: 'success' });
+  }, [selectedRoomId, checkInForm, updateRoomStatus]);
 
   const handleBatchClean = useCallback(() => {
     console.log('[Room] 批量清洁');
-    Taro.showToast({
-      title: '已安排清洁',
-      icon: 'success'
+    const dirtyRoomIds = rooms.filter(r => r.status === 'dirty').map(r => r.id);
+    if (dirtyRoomIds.length === 0) {
+      Taro.showToast({ title: '没有待清洁房间', icon: 'none' });
+      return;
+    }
+    Taro.showModal({
+      title: '批量清洁',
+      content: `确定将 ${dirtyRoomIds.length} 个待清洁房间标记为干净吗？`,
+      success: res => {
+        if (res.confirm) {
+          batchCleanRooms(dirtyRoomIds);
+          Taro.showToast({ title: `已清洁 ${dirtyRoomIds.length} 间`, icon: 'success' });
+        }
+      }
     });
-  }, []);
+  }, [rooms, batchCleanRooms]);
 
   const handleBatchCheckout = useCallback(() => {
     console.log('[Room] 批量退房');
@@ -84,7 +161,7 @@ const RoomPage: React.FC = () => {
       occupied: rooms.filter(r => r.status === 'occupied').length,
       maintenance: rooms.filter(r => r.status === 'maintenance').length
     };
-  }, []);
+  }, [rooms]);
 
   return (
     <View className={styles.page}>
@@ -173,6 +250,62 @@ const RoomPage: React.FC = () => {
           安排清洁
         </Button>
       </View>
+
+      {showCheckInModal && (
+        <View className={styles.modalMask}>
+          <View className={styles.modal}>
+            <View className={styles.modalHeader}>
+              <Text className={styles.modalTitle}>入住登记</Text>
+              <Text className={styles.modalClose} onClick={() => setShowCheckInModal(false)}>×</Text>
+            </View>
+            <View className={styles.modalBody}>
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>客人姓名</Text>
+                <Input
+                  className={styles.formInput}
+                  placeholder='请输入客人姓名'
+                  value={checkInForm.guestName}
+                  onInput={e => setCheckInForm({ ...checkInForm, guestName: e.detail.value })}
+                />
+              </View>
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>联系电话</Text>
+                <Input
+                  className={styles.formInput}
+                  type='number'
+                  placeholder='请输入联系电话'
+                  value={checkInForm.guestPhone}
+                  onInput={e => setCheckInForm({ ...checkInForm, guestPhone: e.detail.value })}
+                />
+              </View>
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>入住日期</Text>
+                <Picker
+                  mode='date'
+                  value={checkInForm.checkInDate}
+                  onChange={e => setCheckInForm({ ...checkInForm, checkInDate: e.detail.value })}
+                >
+                  <View className={styles.pickerText}>{checkInForm.checkInDate || '请选择'}</View>
+                </Picker>
+              </View>
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>离店日期</Text>
+                <Picker
+                  mode='date'
+                  value={checkInForm.checkOutDate}
+                  onChange={e => setCheckInForm({ ...checkInForm, checkOutDate: e.detail.value })}
+                >
+                  <View className={styles.pickerText}>{checkInForm.checkOutDate || '请选择'}</View>
+                </Picker>
+              </View>
+            </View>
+            <View className={styles.modalFooter}>
+              <Button className={styles.modalBtnCancel} onClick={() => setShowCheckInModal(false)}>取消</Button>
+              <Button className={styles.modalBtnConfirm} onClick={handleCheckInSubmit}>确认入住</Button>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 };

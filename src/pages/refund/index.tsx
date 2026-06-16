@@ -1,23 +1,36 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, Button } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import { View, Text, ScrollView, Button, Input } from '@tarojs/components';
+import Taro, { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
-import { refundRequests } from '@/data/stats';
+import { useAppStore } from '@/store';
 import { getStatusText, formatPrice } from '@/utils';
 import classnames from 'classnames';
-import type { RefundRequest } from '@/types';
 
-type FilterType = 'all' | 'pending' | 'approved' | 'refunded';
+type FilterType = 'all' | 'pending' | 'approved' | 'refunded' | 'rejected';
 
 const RefundPage: React.FC = () => {
   const [filter, setFilter] = useState<FilterType>('all');
-  const [refunds, setRefunds] = useState<RefundRequest[]>(refundRequests);
+  const [showRemarkModal, setShowRemarkModal] = useState(false);
+  const [remarkType, setRemarkType] = useState<'approve' | 'reject' | null>(null);
+  const [currentRefundId, setCurrentRefundId] = useState<string | null>(null);
+  const [remark, setRemark] = useState('');
+
+  const refundRequests = useAppStore(state => state.refundRequests);
+  const approveRefund = useAppStore(state => state.approveRefund);
+  const rejectRefund = useAppStore(state => state.rejectRefund);
+  const confirmRefund = useAppStore(state => state.confirmRefund);
+  const hydrate = useAppStore(state => state.hydrate);
+
+  useDidShow(() => {
+    hydrate();
+  });
 
   const tabs: { id: FilterType; name: string }[] = [
     { id: 'all', name: '全部' },
     { id: 'pending', name: '待处理' },
     { id: 'approved', name: '已批准' },
-    { id: 'refunded', name: '已退款' }
+    { id: 'refunded', name: '已退款' },
+    { id: 'rejected', name: '已拒绝' }
   ];
 
   const reasonTypeNames: Record<string, string> = {
@@ -33,77 +46,69 @@ const RefundPage: React.FC = () => {
   };
 
   const stats = useMemo(() => {
-    const pending = refunds.filter(r => r.status === 'pending').length;
-    const total = refunds.length;
-    const refunded = refunds.filter(r => r.status === 'refunded').length;
-    return { pending, total, refunded };
-  }, [refunds]);
+    const pending = refundRequests.filter(r => r.status === 'pending').length;
+    const total = refundRequests.length;
+    const refunded = refundRequests.filter(r => r.status === 'refunded').length;
+    const approved = refundRequests.filter(r => r.status === 'approved').length;
+    const rejected = refundRequests.filter(r => r.status === 'rejected').length;
+    return { pending, total, refunded, approved, rejected };
+  }, [refundRequests]);
+
+  const filterCounts = useMemo(() => {
+    return {
+      all: refundRequests.length,
+      pending: refundRequests.filter(r => r.status === 'pending').length,
+      approved: refundRequests.filter(r => r.status === 'approved').length,
+      refunded: refundRequests.filter(r => r.status === 'refunded').length,
+      rejected: refundRequests.filter(r => r.status === 'rejected').length
+    };
+  }, [refundRequests]);
 
   const filteredRefunds = useMemo(() => {
-    if (filter === 'all') return refunds;
-    return refunds.filter(r => r.status === filter);
-  }, [filter, refunds]);
+    if (filter === 'all') return refundRequests;
+    return refundRequests.filter(r => r.status === filter);
+  }, [filter, refundRequests]);
 
   const handleApprove = useCallback((id: string) => {
     console.log('[Refund] 批准退订:', id);
-    Taro.showModal({
-      title: '确认批准',
-      content: '确定批准该退订申请吗？',
-      success: res => {
-        if (res.confirm) {
-          setRefunds(prev =>
-            prev.map(r =>
-              r.id === id
-                ? { ...r, status: 'approved', handleTime: new Date().toISOString(), handleRemark: '审核通过，等待退款' }
-                : r
-            )
-          );
-          Taro.showToast({
-            title: '已批准',
-            icon: 'success'
-          });
-        }
-      }
-    });
+    setCurrentRefundId(id);
+    setRemarkType('approve');
+    setRemark('');
+    setShowRemarkModal(true);
   }, []);
 
   const handleReject = useCallback((id: string) => {
     console.log('[Refund] 拒绝退订:', id);
-    Taro.showModal({
-      title: '确认拒绝',
-      content: '确定拒绝该退订申请吗？',
-      success: res => {
-        if (res.confirm) {
-          setRefunds(prev =>
-            prev.map(r =>
-              r.id === id
-                ? { ...r, status: 'rejected', handleTime: new Date().toISOString(), handleRemark: '不符合退订条件' }
-                : r
-            )
-          );
-          Taro.showToast({
-            title: '已拒绝',
-            icon: 'none'
-          });
-        }
-      }
-    });
+    setCurrentRefundId(id);
+    setRemarkType('reject');
+    setRemark('');
+    setShowRemarkModal(true);
   }, []);
+
+  const handleConfirmAction = useCallback(() => {
+    if (!currentRefundId || !remarkType) return;
+
+    if (remarkType === 'approve') {
+      approveRefund(currentRefundId, remark || '审核通过');
+      Taro.showToast({ title: '已批准', icon: 'success' });
+    } else {
+      rejectRefund(currentRefundId, remark || '不符合退订条件');
+      Taro.showToast({ title: '已拒绝', icon: 'none' });
+    }
+
+    setShowRemarkModal(false);
+    setCurrentRefundId(null);
+    setRemarkType(null);
+  }, [currentRefundId, remarkType, remark, approveRefund, rejectRefund]);
 
   const handleRefund = useCallback((id: string) => {
     console.log('[Refund] 确认退款:', id);
     Taro.showModal({
       title: '确认退款',
-      content: '确定已完成退款操作吗？',
+      content: '确定已完成退款操作吗？退款后将恢复对应库存。',
       success: res => {
         if (res.confirm) {
-          setRefunds(prev =>
-            prev.map(r =>
-              r.id === id
-                ? { ...r, status: 'refunded', handleTime: new Date().toISOString(), handleRemark: '退款已完成' }
-                : r
-            )
-          );
+          confirmRefund(id);
           Taro.showToast({
             title: '退款完成',
             icon: 'success'
@@ -111,7 +116,7 @@ const RefundPage: React.FC = () => {
         }
       }
     });
-  }, []);
+  }, [confirmRefund]);
 
   return (
     <ScrollView className={styles.page} scrollY>
@@ -124,6 +129,10 @@ const RefundPage: React.FC = () => {
             <Text className={styles.label}>待处理</Text>
           </View>
           <View className={styles.statItem}>
+            <Text className={styles.value}>{stats.approved}</Text>
+            <Text className={styles.label}>待退款</Text>
+          </View>
+          <View className={styles.statItem}>
             <Text className={styles.value}>{stats.refunded}</Text>
             <Text className={styles.label}>已退款</Text>
           </View>
@@ -134,7 +143,7 @@ const RefundPage: React.FC = () => {
         </View>
       </View>
 
-      <View className={styles.tabs}>
+      <ScrollView className={styles.tabs} scrollX>
         {tabs.map(tab => (
           <View
             key={tab.id}
@@ -142,9 +151,10 @@ const RefundPage: React.FC = () => {
             onClick={() => setFilter(tab.id)}
           >
             {tab.name}
+            <Text className={styles.tabCount}>{filterCounts[tab.id]}</Text>
           </View>
         ))}
-      </View>
+      </ScrollView>
 
       <View className={styles.refundList}>
         {filteredRefunds.length > 0 ? (
@@ -231,6 +241,39 @@ const RefundPage: React.FC = () => {
           </View>
         )}
       </View>
+
+      {showRemarkModal && (
+        <View className={styles.modalMask}>
+          <View className={styles.modal}>
+            <View className={styles.modalHeader}>
+              <Text className={styles.modalTitle}>
+                {remarkType === 'approve' ? '批准退订' : '拒绝退订'}
+              </Text>
+              <Text className={styles.modalClose} onClick={() => setShowRemarkModal(false)}>×</Text>
+            </View>
+            <View className={styles.modalBody}>
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>处理备注</Text>
+                <Input
+                  className={styles.formInput}
+                  placeholder={remarkType === 'approve' ? '请输入批准备注（可选）' : '请输入拒绝原因'}
+                  value={remark}
+                  onInput={e => setRemark(e.detail.value)}
+                />
+              </View>
+            </View>
+            <View className={styles.modalFooter}>
+              <Button className={styles.modalBtnCancel} onClick={() => setShowRemarkModal(false)}>取消</Button>
+              <Button
+                className={classnames(styles.modalBtnConfirm, remarkType === 'reject' && styles.danger)}
+                onClick={handleConfirmAction}
+              >
+                {remarkType === 'approve' ? '确认批准' : '确认拒绝'}
+              </Button>
+            </View>
+          </View>
+        </View>
+      )}
     </ScrollView>
   );
 };

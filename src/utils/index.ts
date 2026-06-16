@@ -2,11 +2,12 @@ export const formatPrice = (price: number): string => {
   return `¥${price.toFixed(0)}`;
 };
 
-export const formatDate = (date: string): string => {
-  const d = new Date(date);
-  const month = d.getMonth() + 1;
-  const day = d.getDate();
-  return `${month}月${day}日`;
+export const formatDate = (date: string | Date): string => {
+  const d = date instanceof Date ? date : new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 };
 
 export const formatDateCN = (date: string): string => {

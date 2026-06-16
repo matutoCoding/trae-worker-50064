@@ -1,14 +1,24 @@
 import React, { useEffect } from 'react';
 import { useDidShow, useDidHide } from '@tarojs/taro';
+import { useAppStore } from '@/store';
 // 全局样式
 import './app.scss';
 
 function App(props) {
-  // 可以使用所有的 React Hooks
-  useEffect(() => {});
+  const initStore = useAppStore(state => state.initStore);
+
+  useEffect(() => {
+    // 应用启动时初始化 store
+    initStore();
+    console.log('[App] Store initialized');
+  }, []);
 
   // 对应 onShow
-  useDidShow(() => {});
+  useDidShow(() => {
+    // 每次显示时恢复状态
+    const hydrate = useAppStore.getState().hydrate;
+    hydrate();
+  });
 
   // 对应 onHide
   useDidHide(() => {});

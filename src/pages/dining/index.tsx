@@ -1,18 +1,54 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, Image, Button } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import { View, Text, ScrollView, Image, Button, Picker, Input } from '@tarojs/components';
+import Taro, { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import { dishes } from '@/data/dining';
-import { formatPrice } from '@/utils';
+import { useAppStore } from '@/store';
+import { formatPrice, formatDate } from '@/utils';
 import classnames from 'classnames';
 
 type CategoryType = 'all' | '海鲜主菜' | '海鲜热菜' | '主食粥品' | '汤品' | '素菜' | '甜点';
 
+const timeSlots = [
+  '11:00', '11:30', '12:00', '12:30', '13:00',
+  '17:00', '17:30', '18:00', '18:30', '19:00', '19:30', '20:00'
+];
+
+interface DiningOrderDisplay {
+  id: string;
+  orderNo: string;
+  date: string;
+  time: string;
+  guests: number;
+  dishes: { name: string; quantity: number; price: number }[];
+  totalPrice: number;
+  status: string;
+  createTime: string;
+}
+
 const DiningPage: React.FC = () => {
   const [category, setCategory] = useState<CategoryType>('all');
   const [quantities, setQuantities] = useState<Record<string, number>>({});
-  const [bookingDate, setBookingDate] = useState('2026-06-17');
+  const [bookingDate, setBookingDate] = useState(formatDate(new Date()));
   const [bookingTime, setBookingTime] = useState('18:30');
+  const [guests, setGuests] = useState(2);
+  const [guestName, setGuestName] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [myOrders, setMyOrders] = useState<DiningOrderDisplay[]>([]);
+  const [showOrders, setShowOrders] = useState(false);
+
+  const diningBookings = useAppStore(state => state.diningBookings);
+  const createDiningBooking = useAppStore(state => state.createDiningBooking);
+  const hydrate = useAppStore(state => state.hydrate);
+
+  useDidShow(() => {
+    hydrate();
+    const stored = Taro.getStorageSync('dining_orders_display');
+    if (stored) {
+      setMyOrders(JSON.parse(stored));
+    }
+  });
 
   const categories: { id: CategoryType; name: string }[] = [
     { id: 'all', name: '全部' },
@@ -60,34 +96,65 @@ const DiningPage: React.FC = () => {
       });
       return;
     }
-    Taro.showModal({
-      title: '确认预订',
-      content: `共${totalInfo.totalCount}份菜品，合计¥${totalInfo.totalPrice}，确定提交预订吗？`,
-      success: res => {
-        if (res.confirm) {
-          Taro.showToast({
-            title: '预订成功',
-            icon: 'success'
-          });
-          setQuantities({});
-        }
-      }
-    });
+    setShowConfirmModal(true);
   }, [totalInfo]);
 
-  const handleDateChange = useCallback(() => {
-    Taro.showToast({
-      title: '日期选择开发中',
-      icon: 'none'
-    });
-  }, []);
+  const handleConfirmSubmit = useCallback(() => {
+    if (!guestName.trim()) {
+      Taro.showToast({ title: '请输入姓名', icon: 'none' });
+      return;
+    }
+    if (!guestPhone.trim()) {
+      Taro.showToast({ title: '请输入电话', icon: 'none' });
+      return;
+    }
 
-  const handleTimeChange = useCallback(() => {
-    Taro.showToast({
-      title: '时间选择开发中',
-      icon: 'none'
+    const selectedDishes = Object.keys(quantities)
+      .map(dishId => {
+        const qty = quantities[dishId] || 0;
+        const dish = dishes.find(d => d.id === dishId);
+        if (dish && qty > 0) {
+          return { dishId, dishName: dish.name, quantity: qty, price: dish.price };
+        }
+        return null;
+      })
+      .filter(Boolean) as { dishId: string; dishName: string; quantity: number; price: number }[];
+
+    const booking = createDiningBooking({
+      date: bookingDate,
+      time: bookingTime,
+      guests,
+      guestName,
+      guestPhone,
+      dishes: selectedDishes,
+      totalPrice: totalInfo.totalPrice
     });
-  }, []);
+
+    const orderDisplay: DiningOrderDisplay = {
+      id: booking.id,
+      orderNo: booking.orderNo,
+      date: bookingDate,
+      time: bookingTime,
+      guests,
+      dishes: selectedDishes.map(d => ({ name: d.dishName, quantity: d.quantity, price: d.price })),
+      totalPrice: totalInfo.totalPrice,
+      status: '已确认',
+      createTime: new Date().toLocaleString('zh-CN')
+    };
+
+    const updatedOrders = [orderDisplay, ...myOrders];
+    setMyOrders(updatedOrders);
+    Taro.setStorageSync('dining_orders_display', JSON.stringify(updatedOrders));
+
+    setShowConfirmModal(false);
+    setQuantities({});
+    setGuestName('');
+    setGuestPhone('');
+    Taro.showToast({
+      title: '预订成功',
+      icon: 'success'
+    });
+  }, [quantities, bookingDate, bookingTime, guests, guestName, guestPhone, totalInfo, createDiningBooking, myOrders]);
 
   return (
     <View className={styles.page}>
@@ -96,22 +163,79 @@ const DiningPage: React.FC = () => {
         <Text className={styles.headerSubtitle}>新鲜海捕 · 现捞现做 · 海岛美味</Text>
 
         <View className={styles.bookingBar}>
-          <View className={styles.bookingItem} onClick={handleDateChange}>
-            <Text className={styles.label}>用餐日期</Text>
-            <Text className={styles.value}>{bookingDate}</Text>
-          </View>
+          <Picker
+            mode='date'
+            value={bookingDate}
+            onChange={e => setBookingDate(e.detail.value)}
+          >
+            <View className={styles.bookingItem}>
+              <Text className={styles.label}>用餐日期</Text>
+              <Text className={styles.value}>{bookingDate}</Text>
+            </View>
+          </Picker>
           <View className={styles.bookingDivider} />
-          <View className={styles.bookingItem} onClick={handleTimeChange}>
-            <Text className={styles.label}>用餐时间</Text>
-            <Text className={styles.value}>{bookingTime}</Text>
-          </View>
+          <Picker
+            mode='selector'
+            range={timeSlots}
+            value={timeSlots.indexOf(bookingTime)}
+            onChange={e => setBookingTime(timeSlots[Number(e.detail.value)])}
+          >
+            <View className={styles.bookingItem}>
+              <Text className={styles.label}>用餐时间</Text>
+              <Text className={styles.value}>{bookingTime}</Text>
+            </View>
+          </Picker>
           <View className={styles.bookingDivider} />
-          <View className={styles.bookingItem} onClick={() => Taro.showToast({ title: '人数选择开发中', icon: 'none' })}>
+          <View className={styles.bookingItem}>
             <Text className={styles.label}>用餐人数</Text>
-            <Text className={styles.value}>2人</Text>
+            <View className={styles.guestsSelector}>
+              <Button
+                className={styles.guestsBtn}
+                onClick={() => setGuests(Math.max(1, guests - 1))}
+              >-</Button>
+              <Text className={styles.guestsValue}>{guests}人</Text>
+              <Button
+                className={styles.guestsBtn}
+                onClick={() => setGuests(Math.min(20, guests + 1))}
+              >+</Button>
+            </View>
           </View>
         </View>
+
+        <View className={styles.myOrdersBtn} onClick={() => setShowOrders(!showOrders)}>
+          <Text className={styles.ordersIcon}>📋</Text>
+          <Text className={styles.ordersText}>我的订单 ({myOrders.length})</Text>
+          <Text className={styles.ordersArrow}>{showOrders ? '▲' : '▼'}</Text>
+        </View>
       </View>
+
+      {showOrders && myOrders.length > 0 && (
+        <View className={styles.ordersPanel}>
+          {myOrders.map(order => (
+            <View key={order.id} className={styles.orderCard}>
+              <View className={styles.orderHeader}>
+                <Text className={styles.orderNo}>{order.orderNo}</Text>
+                <Text className={styles.orderStatus}>{order.status}</Text>
+              </View>
+              <View className={styles.orderInfo}>
+                <Text className={styles.orderTime}>{order.date} {order.time} · {order.guests}人</Text>
+                <Text className={styles.orderGuest}>{order.guestName} {order.guestPhone}</Text>
+              </View>
+              <View className={styles.orderDishes}>
+                {order.dishes.map((dish, idx) => (
+                  <Text key={idx} className={styles.orderDish}>
+                    {dish.name} × {dish.quantity}
+                  </Text>
+                ))}
+              </View>
+              <View className={styles.orderFooter}>
+                <Text className={styles.orderTotal}>合计: ¥{order.totalPrice}</Text>
+                <Text className={styles.orderCreateTime}>{order.createTime}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
 
       <ScrollView className={styles.categories} scrollX>
         {categories.map(cat => (
@@ -197,6 +321,63 @@ const DiningPage: React.FC = () => {
           立即预订
         </Button>
       </View>
+
+      {showConfirmModal && (
+        <View className={styles.modalMask}>
+          <View className={styles.modal}>
+            <View className={styles.modalHeader}>
+              <Text className={styles.modalTitle}>确认预订信息</Text>
+              <Text className={styles.modalClose} onClick={() => setShowConfirmModal(false)}>×</Text>
+            </View>
+            <View className={styles.modalBody}>
+              <View className={styles.confirmInfo}>
+                <Text className={styles.confirmLabel}>用餐日期</Text>
+                <Text className={styles.confirmValue}>{bookingDate}</Text>
+              </View>
+              <View className={styles.confirmInfo}>
+                <Text className={styles.confirmLabel}>用餐时间</Text>
+                <Text className={styles.confirmValue}>{bookingTime}</Text>
+              </View>
+              <View className={styles.confirmInfo}>
+                <Text className={styles.confirmLabel}>用餐人数</Text>
+                <Text className={styles.confirmValue}>{guests}人</Text>
+              </View>
+              <View className={styles.confirmInfo}>
+                <Text className={styles.confirmLabel}>菜品数量</Text>
+                <Text className={styles.confirmValue}>{totalInfo.totalCount}份</Text>
+              </View>
+              <View className={styles.confirmInfo}>
+                <Text className={styles.confirmLabel}>合计金额</Text>
+                <Text className={styles.confirmPrice}>¥{totalInfo.totalPrice}</Text>
+              </View>
+
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>联系人姓名</Text>
+                <Input
+                  className={styles.formInput}
+                  placeholder='请输入姓名'
+                  value={guestName}
+                  onInput={e => setGuestName(e.detail.value)}
+                />
+              </View>
+              <View className={styles.formItem}>
+                <Text className={styles.formLabel}>联系电话</Text>
+                <Input
+                  className={styles.formInput}
+                  type='number'
+                  placeholder='请输入电话'
+                  value={guestPhone}
+                  onInput={e => setGuestPhone(e.detail.value)}
+                />
+              </View>
+            </View>
+            <View className={styles.modalFooter}>
+              <Button className={styles.modalBtnCancel} onClick={() => setShowConfirmModal(false)}>取消</Button>
+              <Button className={styles.modalBtnConfirm} onClick={handleConfirmSubmit}>确认预订</Button>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 };

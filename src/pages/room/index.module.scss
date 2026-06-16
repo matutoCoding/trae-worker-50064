@@ -245,3 +245,114 @@
 .pageContent {
   padding-bottom: 140rpx;
 }
+
+.modalMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  width: 600rpx;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1px solid $color-divider;
+}
+
+.modalTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.modalClose {
+  font-size: 48rpx;
+  color: $color-text-tertiary;
+  line-height: 1;
+}
+
+.modalBody {
+  padding: $spacing-lg;
+}
+
+.modalFooter {
+  display: flex;
+  padding: $spacing-md $spacing-lg;
+  gap: $spacing-md;
+  border-top: 1px solid $color-divider;
+}
+
+.modalBtnCancel,
+.modalBtnConfirm {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-md;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+}
+
+.modalBtnCancel {
+  background: $color-bg-section;
+  color: $color-text-primary;
+}
+
+.modalBtnConfirm {
+  background: $color-primary;
+  color: $color-text-white;
+}
+
+.formItem {
+  margin-bottom: $spacing-md;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.formLabel {
+  display: block;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+}
+
+.formInput {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 $spacing-md;
+  border: 1px solid $color-divider;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  background: $color-bg-section;
+  box-sizing: border-box;
+}
+
+.pickerText {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  padding: 0 $spacing-md;
+  border: 1px solid $color-divider;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  background: $color-bg-section;
+  box-sizing: border-box;
+}

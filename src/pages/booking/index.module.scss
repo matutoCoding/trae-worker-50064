@@ -134,3 +134,365 @@
     font-size: $font-size-md;
   }
 }
+
+.recentOrder {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.orderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+  padding-bottom: $spacing-sm;
+  border-bottom: 1px solid $color-divider;
+}
+
+.orderNo {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.orderStatus {
+  font-size: $font-size-xs;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+  font-weight: $font-weight-medium;
+
+  &.confirmed, &.checkedIn {
+    background: rgba(0, 136, 204, 0.1);
+    color: $color-primary;
+  }
+
+  &.refunded, &.cancelled {
+    background: rgba(231, 76, 60, 0.1);
+    color: $color-error;
+  }
+}
+
+.orderInfo {
+  margin-bottom: $spacing-sm;
+}
+
+.roomName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.orderDates {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.orderGuest {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.orderFooter {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.orderAmount {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-price;
+}
+
+.modalMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $page-padding;
+}
+
+.modal {
+  width: 100%;
+  max-height: 90vh;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-lg;
+  border-bottom: 1px solid $color-divider;
+}
+
+.modalTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.modalClose {
+  font-size: 32rpx;
+  color: $color-text-tertiary;
+  padding: 8rpx;
+}
+
+.modalContent {
+  flex: 1;
+  padding: $spacing-lg;
+  overflow-y: auto;
+}
+
+.modalRoom {
+  display: flex;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background: $color-bg-section;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-lg;
+}
+
+.modalRoomImage {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: $radius-md;
+  background: $color-primary-bg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.modalRoomInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.modalRoomName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: 4rpx;
+  display: block;
+}
+
+.modalRoomMeta {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  margin-bottom: 8rpx;
+  display: block;
+}
+
+.modalPriceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4rpx;
+}
+
+.modalPrice {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-price;
+}
+
+.modalPriceUnit {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.modalSection {
+  margin-bottom: $spacing-lg;
+}
+
+.modalSectionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: block;
+}
+
+.modalDateRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  background: $color-bg-section;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.modalDateItem {
+  flex: 1;
+  text-align: center;
+}
+
+.modalDateLabel {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.modalDateValue {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+}
+
+.modalDateArrow {
+  color: $color-primary;
+  font-size: 24rpx;
+}
+
+.formItem {
+  margin-bottom: $spacing-md;
+}
+
+.formLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-xs;
+  display: block;
+}
+
+.formInput {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 $spacing-md;
+  background: $color-bg-section;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  box-sizing: border-box;
+}
+
+.formPicker {
+  height: 80rpx;
+  padding: 0 $spacing-md;
+  background: $color-bg-section;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pickerArrow {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+}
+
+.depositRow {
+  display: flex;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.depositOption {
+  padding: $spacing-sm $spacing-md;
+  background: $color-bg-section;
+  border-radius: $radius-md;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  border: 2rpx solid transparent;
+  transition: all $transition-base;
+
+  &.depositSelected {
+    background: $color-primary-bg;
+    color: $color-primary;
+    border-color: $color-primary;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.modalSummary {
+  background: $color-accent-bg;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-top: $spacing-lg;
+}
+
+.summaryRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-sm;
+
+  &:last-child {
+    margin-bottom: 0;
+    padding-top: $spacing-sm;
+    border-top: 1px dashed rgba(255, 140, 66, 0.3);
+  }
+}
+
+.summaryLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.summaryValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+}
+
+.summaryTotal {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: $color-price;
+}
+
+.modalFooter {
+  display: flex;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  border-top: 1px solid $color-divider;
+}
+
+.cancelBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-md;
+  background: $color-bg-section;
+  color: $color-text-secondary;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  border-radius: $radius-button;
+  transition: all $transition-base;
+
+  &:active {
+    background: $color-bg-hover;
+  }
+}
+
+.confirmBtn {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-md;
+  background: $color-primary;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  border-radius: $radius-button;
+  transition: all $transition-base;
+
+  &:active {
+    background: $color-primary-dark;
+  }
+}

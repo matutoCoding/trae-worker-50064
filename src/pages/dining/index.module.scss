@@ -328,3 +328,266 @@
     font-size: $font-size-md;
   }
 }
+
+.guestsSelector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  margin-top: 4rpx;
+}
+
+.guestsBtn {
+  @include button-reset;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-md;
+  background: rgba(255, 255, 255, 0.2);
+  color: $color-text-white;
+}
+
+.guestsValue {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  min-width: 60rpx;
+  text-align: center;
+}
+
+.myOrdersBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  margin-top: $spacing-md;
+  padding: $spacing-sm $spacing-md;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: $radius-button;
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 1;
+}
+
+.ordersIcon {
+  font-size: 28rpx;
+}
+
+.ordersText {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+
+.ordersArrow {
+  font-size: 20rpx;
+}
+
+.ordersPanel {
+  background: $color-bg-page;
+  padding: $spacing-md $page-padding;
+}
+
+.orderCard {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+}
+
+.orderHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.orderNo {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+}
+
+.orderStatus {
+  font-size: $font-size-xs;
+  color: $color-success;
+  font-weight: $font-weight-medium;
+  background: rgba(46, 204, 113, 0.1);
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+}
+
+.orderInfo {
+  margin-bottom: $spacing-sm;
+}
+
+.orderTime,
+.orderGuest {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  display: block;
+}
+
+.orderDishes {
+  padding: $spacing-sm 0;
+  border-top: 1px dashed $color-divider;
+  border-bottom: 1px dashed $color-divider;
+  margin-bottom: $spacing-sm;
+}
+
+.orderDish {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  display: block;
+  margin-bottom: 4rpx;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.orderFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.orderTotal {
+  font-size: $font-size-md;
+  color: $color-price;
+  font-weight: $font-weight-bold;
+}
+
+.orderCreateTime {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.modalMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  width: 620rpx;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  overflow: hidden;
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1px solid $color-divider;
+}
+
+.modalTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.modalClose {
+  font-size: 48rpx;
+  color: $color-text-tertiary;
+  line-height: 1;
+}
+
+.modalBody {
+  padding: $spacing-lg;
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.modalFooter {
+  display: flex;
+  padding: $spacing-md $spacing-lg;
+  gap: $spacing-md;
+  border-top: 1px solid $color-divider;
+}
+
+.modalBtnCancel,
+.modalBtnConfirm {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-md;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+}
+
+.modalBtnCancel {
+  background: $color-bg-section;
+  color: $color-text-primary;
+}
+
+.modalBtnConfirm {
+  background: $color-error;
+  color: $color-text-white;
+}
+
+.confirmInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-sm 0;
+  border-bottom: 1px dashed $color-divider;
+
+  &:last-of-type {
+    border-bottom: none;
+    margin-bottom: $spacing-lg;
+  }
+}
+
+.confirmLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.confirmValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.confirmPrice {
+  font-size: $font-size-lg;
+  color: $color-price;
+  font-weight: $font-weight-bold;
+}
+
+.formItem {
+  margin-bottom: $spacing-md;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.formLabel {
+  display: block;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-sm;
+}
+
+.formInput {
+  width: 100%;
+  height: 80rpx;
+  padding: 0 $spacing-md;
+  border: 1px solid $color-divider;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  background: $color-bg-section;
+  box-sizing: border-box;
+}
