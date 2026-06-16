@@ -2,6 +2,7 @@
 
 .page {
   min-height: 100vh;
+  background: $color-bg-page;
 }
 
 .header {
@@ -23,17 +24,21 @@
 
 .dateSelector {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   background: rgba(255, 255, 255, 0.2);
   border-radius: $radius-md;
   padding: $spacing-md;
   margin-top: $spacing-lg;
   backdrop-filter: blur(10px);
+  gap: $spacing-sm;
 }
 
 .dateItem {
   flex: 1;
   text-align: center;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: $radius-sm;
+  padding: $spacing-sm;
 
   .label {
     font-size: $font-size-xs;
@@ -45,79 +50,591 @@
   .value {
     font-size: $font-size-lg;
     font-weight: $font-weight-semibold;
+    display: block;
+  }
+
+  .weekday {
+    font-size: $font-size-xs;
+    opacity: 0.85;
+    margin-top: 2rpx;
+    display: block;
   }
 }
 
+.dateArrowWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  padding: 0 $spacing-xs;
+}
+
 .dateArrow {
-  font-size: 32rpx;
-  opacity: 0.6;
-  padding: 0 $spacing-sm;
+  font-size: 36rpx;
+  opacity: 0.7;
 }
 
 .nightsBadge {
   position: absolute;
-  top: -20rpx;
-  right: -16rpx;
+  top: -16rpx;
+  right: -24rpx;
   background: $color-accent;
   color: white;
-  font-size: $font-size-xs;
+  font-size: 20rpx;
   padding: 4rpx 12rpx;
   border-radius: $radius-round;
   font-weight: $font-weight-medium;
+  white-space: nowrap;
 }
 
-.filterBar {
+.sectionHeader {
   display: flex;
   align-items: center;
-  padding: $spacing-md $page-padding;
-  background: $color-bg-card;
-  border-bottom: 1px solid $color-divider;
-  gap: $spacing-md;
-  overflow-x: auto;
-  white-space: nowrap;
-
-  @include scroll-x-container;
-}
-
-.filterItem {
-  @include scroll-x-item(auto);
-  display: inline-flex;
-  align-items: center;
-  padding: 12rpx 24rpx;
-  background: $color-bg-section;
-  border-radius: $radius-button;
-  font-size: $font-size-sm;
-  color: $color-text-secondary;
-  margin-right: $spacing-sm;
-  flex-shrink: 0;
-  transition: all $transition-base;
-
-  &.active {
-    background: $color-primary-bg;
-    color: $color-primary;
-    font-weight: $font-weight-medium;
-  }
-}
-
-.roomList {
-  padding: $spacing-md $page-padding;
-  padding-bottom: 40rpx;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
 }
 
 .sectionTitle {
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
   color: $color-text-primary;
-  margin: $spacing-md 0;
+}
+
+.sectionSubtitle {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.sectionCount {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  font-weight: normal;
+}
+
+.calendarSection {
+  padding: $spacing-md $page-padding;
+  background: $color-bg-card;
+  margin-top: $spacing-sm;
+}
+
+.calendarContainer {
+  margin: 0 (-$page-padding);
+}
+
+.calendarScroll {
+  padding: 0 $page-padding;
+
+  @include scroll-x-container;
+}
+
+.calendar {
+  display: inline-flex;
+  flex-direction: column;
+  min-width: 100%;
+  border-radius: $radius-md;
+  overflow: hidden;
+  border: 1rpx solid $color-divider;
+}
+
+.calendarHeaderRow {
+  display: flex;
+  background: $color-bg-section;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.calendarCorner {
+  width: 200rpx;
+  min-width: 200rpx;
+  flex-shrink: 0;
+  padding: $spacing-sm $spacing-md;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  font-weight: $font-weight-semibold;
+  display: flex;
+  align-items: center;
+  border-right: 1rpx solid $color-divider;
+  border-bottom: 1rpx solid $color-divider;
+  background: $color-bg-section;
+}
+
+.calendarHeaderCell {
+  width: 130rpx;
+  min-width: 130rpx;
+  flex-shrink: 0;
+  padding: $spacing-xs $spacing-sm;
+  text-align: center;
+  border-right: 1rpx solid $color-divider;
+  border-bottom: 1rpx solid $color-divider;
+  transition: background $transition-base;
+
+  &.inRange {
+    background: $color-primary-bg;
+  }
+
+  .cellDate {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    display: block;
+  }
+
+  .cellWeekday {
+    font-size: 20rpx;
+    color: $color-text-tertiary;
+    display: block;
+    margin-top: 2rpx;
+  }
+}
+
+.calendarRoomRow {
+  display: flex;
+  background: $color-bg-card;
+
+  &:nth-child(even) {
+    background: darken($color-bg-card, 1%);
+  }
+}
+
+.roomNameCell {
+  width: 200rpx;
+  min-width: 200rpx;
+  flex-shrink: 0;
+  padding: $spacing-sm $spacing-md;
+  border-right: 1rpx solid $color-divider;
+  border-bottom: 1rpx solid $color-divider;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  cursor: pointer;
+  transition: background $transition-base;
+  background: $color-bg-section;
+
+  &:active {
+    background: $color-bg-hover;
+  }
+
+  &.roomDisabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .roomNameText {
+    font-size: $font-size-xs;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    display: block;
+    line-height: 1.3;
+  }
+
+  .roomCapacity {
+    font-size: 20rpx;
+    color: $color-text-tertiary;
+    margin-top: 4rpx;
+    display: block;
+  }
+}
+
+.dateCell {
+  width: 130rpx;
+  min-width: 130rpx;
+  flex-shrink: 0;
+  padding: $spacing-xs $spacing-sm;
+  text-align: center;
+  border-right: 1rpx solid $color-divider;
+  border-bottom: 1rpx solid $color-divider;
+  transition: all $transition-base;
+  cursor: pointer;
+
+  &:active {
+    background: $color-primary-bg;
+  }
+
+  &.cellSelected {
+    background: $color-primary-bg;
+    border-color: $color-primary;
+
+    .cellPrice {
+      color: $color-primary;
+      font-weight: $font-weight-bold;
+    }
+  }
+
+  &.cellFull {
+    background: lighten($color-error-bg, 3%);
+    cursor: not-allowed;
+  }
+
+  .cellPrice {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-price;
+    display: block;
+
+    &.textMuted {
+      color: $color-text-tertiary;
+      text-decoration: line-through;
+    }
+  }
+
+  .cellAvail {
+    font-size: 20rpx;
+    margin-top: 4rpx;
+    display: block;
+
+    &.textSuccess {
+      color: $color-success;
+    }
+
+    &.textDanger {
+      color: $color-error;
+      font-weight: $font-weight-semibold;
+    }
+  }
+}
+
+.summarySection {
+  padding: $spacing-md $page-padding;
+  margin-top: $spacing-sm;
+  background: $color-bg-card;
+}
+
+.summaryCard {
+  background: $color-bg-section;
+  border-radius: $radius-md;
+  padding: $spacing-lg;
+}
+
+.summaryRoomInfo {
+  padding-bottom: $spacing-md;
+  margin-bottom: $spacing-md;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.summaryRoomName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: block;
+}
+
+.summaryRoomMeta {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  margin-top: $spacing-xs;
+  display: block;
+}
+
+.summaryRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding: $spacing-xs 0;
+}
 
-  .count {
-    font-size: $font-size-sm;
-    color: $color-text-secondary;
-    font-weight: normal;
+.summaryLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.summaryValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.summaryPrice {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-price;
+}
+
+.summaryDivider {
+  height: 1rpx;
+  background: $color-divider;
+  margin: $spacing-sm 0;
+}
+
+.dailyPriceList {
+  background: $color-bg-card;
+  border-radius: $radius-sm;
+  padding: $spacing-md;
+  margin: $spacing-md 0;
+}
+
+.dailyPriceTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.dailyPriceItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-xs 0;
+
+  &:not(:last-child) {
+    border-bottom: 1rpx dashed $color-divider;
   }
+}
+
+.dailyPriceDate {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.dailyPriceAmount {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-price;
+}
+
+.ordersSection {
+  padding: $spacing-md $page-padding;
+  margin-top: $spacing-sm;
+  background: $color-bg-card;
+  padding-bottom: $spacing-xl;
+}
+
+.orderCard {
+  background: $color-bg-card;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-md;
+  overflow: hidden;
+  border: 1rpx solid $color-divider;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &.expanded {
+    border-color: $color-primary;
+  }
+}
+
+.orderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  background: $color-bg-section;
+  border-bottom: 1rpx solid $color-divider;
+  cursor: pointer;
+}
+
+.orderHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.orderNo {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  font-family: monospace;
+}
+
+.orderStatus {
+  font-size: 20rpx;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+  font-weight: $font-weight-medium;
+
+  &.status-pending {
+    background: rgba(243, 156, 18, 0.1);
+    color: #f39c12;
+  }
+
+  &.status-confirmed {
+    background: rgba(0, 136, 204, 0.1);
+    color: $color-primary;
+  }
+
+  &.status-checkedIn {
+    background: rgba(46, 204, 113, 0.1);
+    color: $color-success;
+  }
+
+  &.status-checkedOut {
+    background: rgba(138, 163, 189, 0.1);
+    color: $color-text-secondary;
+  }
+
+  &.status-cancelled, &.status-refunded {
+    background: rgba(231, 76, 60, 0.1);
+    color: $color-error;
+  }
+
+  &.status-refunding {
+    background: rgba(255, 140, 66, 0.1);
+    color: $color-accent;
+  }
+}
+
+.expandIcon {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+  transition: transform $transition-base;
+
+  &.rotated {
+    transform: rotate(180deg);
+    color: $color-primary;
+  }
+}
+
+.orderBasic {
+  padding: $spacing-md $spacing-lg;
+  cursor: pointer;
+}
+
+.orderRoomName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+  display: block;
+}
+
+.orderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-xs 0;
+}
+
+.orderLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.orderValue {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.orderTotal {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-price;
+}
+
+.orderDetail {
+  padding: 0 $spacing-lg $spacing-lg;
+}
+
+.detailDivider {
+  height: 1rpx;
+  background: $color-divider;
+  margin: $spacing-sm 0;
+}
+
+.detailTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin: $spacing-sm 0;
+  display: block;
+}
+
+.detailTable {
+  background: $color-bg-section;
+  border-radius: $radius-sm;
+  overflow: hidden;
+  border: 1rpx solid $color-divider;
+}
+
+.detailTableHeader {
+  display: flex;
+  background: $color-primary-bg;
+}
+
+.detailTh {
+  flex: 1;
+  padding: $spacing-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+  text-align: center;
+
+  &:not(:last-child) {
+    border-right: 1rpx solid $color-divider;
+  }
+}
+
+.detailTableRow {
+  display: flex;
+
+  &:not(:last-child) {
+    border-bottom: 1rpx solid $color-divider;
+  }
+}
+
+.detailTd {
+  flex: 1;
+  padding: $spacing-sm;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  text-align: center;
+
+  &:not(:last-child) {
+    border-right: 1rpx solid $color-divider;
+  }
+
+  &.detailPrice {
+    font-weight: $font-weight-semibold;
+    color: $color-price;
+  }
+}
+
+.detailTableFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-sm;
+  background: $color-accent-bg;
+}
+
+.detailFooterLabel {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.detailFooterPrice {
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-price;
+}
+
+.orderMeta {
+  margin-top: $spacing-md;
+  padding: $spacing-md;
+  background: $color-bg-section;
+  border-radius: $radius-sm;
+}
+
+.orderMetaRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-xs 0;
+
+  &:not(:last-child) {
+    border-bottom: 1rpx dashed $color-divider;
+  }
+}
+
+.orderMetaLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.orderMetaValue {
+  font-size: $font-size-xs;
+  color: $color-text-primary;
+  font-family: monospace;
 }
 
 .emptyState {
@@ -132,81 +649,16 @@
 
   .text {
     font-size: $font-size-md;
-  }
-}
-
-.recentOrder {
-  background: $color-bg-card;
-  border-radius: $radius-lg;
-  padding: $spacing-lg;
-  margin-bottom: $spacing-md;
-  box-shadow: $shadow-card;
-}
-
-.orderHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: $spacing-sm;
-  padding-bottom: $spacing-sm;
-  border-bottom: 1px solid $color-divider;
-}
-
-.orderNo {
-  font-size: $font-size-sm;
-  color: $color-text-secondary;
-}
-
-.orderStatus {
-  font-size: $font-size-xs;
-  padding: 4rpx 12rpx;
-  border-radius: $radius-xs;
-  font-weight: $font-weight-medium;
-
-  &.confirmed, &.checkedIn {
-    background: rgba(0, 136, 204, 0.1);
-    color: $color-primary;
+    color: $color-text-secondary;
+    display: block;
   }
 
-  &.refunded, &.cancelled {
-    background: rgba(231, 76, 60, 0.1);
-    color: $color-error;
+  .subText {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+    margin-top: $spacing-xs;
+    display: block;
   }
-}
-
-.orderInfo {
-  margin-bottom: $spacing-sm;
-}
-
-.roomName {
-  font-size: $font-size-md;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-  display: block;
-  margin-bottom: 4rpx;
-}
-
-.orderDates {
-  font-size: $font-size-sm;
-  color: $color-text-secondary;
-  display: block;
-  margin-bottom: 4rpx;
-}
-
-.orderGuest {
-  font-size: $font-size-sm;
-  color: $color-text-tertiary;
-}
-
-.orderFooter {
-  display: flex;
-  justify-content: flex-end;
-}
-
-.orderAmount {
-  font-size: $font-size-md;
-  font-weight: $font-weight-semibold;
-  color: $color-price;
 }
 
 .modalMask {
@@ -238,7 +690,7 @@
   align-items: center;
   justify-content: space-between;
   padding: $spacing-lg;
-  border-bottom: 1px solid $color-divider;
+  border-bottom: 1rpx solid $color-divider;
 }
 
 .modalTitle {
@@ -277,6 +729,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  font-size: 60rpx;
 }
 
 .modalRoomInfo {
@@ -297,23 +750,6 @@
   color: $color-text-secondary;
   margin-bottom: 8rpx;
   display: block;
-}
-
-.modalPriceRow {
-  display: flex;
-  align-items: baseline;
-  gap: 4rpx;
-}
-
-.modalPrice {
-  font-size: $font-size-xl;
-  font-weight: $font-weight-bold;
-  color: $color-price;
-}
-
-.modalPriceUnit {
-  font-size: $font-size-sm;
-  color: $color-text-tertiary;
 }
 
 .modalSection {
@@ -353,11 +789,94 @@
   font-size: $font-size-md;
   font-weight: $font-weight-medium;
   color: $color-text-primary;
+  display: block;
+}
+
+.modalDateWeekday {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  margin-top: 2rpx;
+  display: block;
 }
 
 .modalDateArrow {
   color: $color-primary;
-  font-size: 24rpx;
+  font-size: 28rpx;
+}
+
+.modalNightsRow {
+  text-align: center;
+  margin-top: $spacing-sm;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+
+  .highlight {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-bold;
+    color: $color-primary;
+    margin: 0 4rpx;
+  }
+}
+
+.modalDailyList {
+  background: $color-bg-section;
+  border-radius: $radius-md;
+  padding: $spacing-sm $spacing-md;
+}
+
+.modalDailyItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-sm 0;
+
+  &:not(:last-child) {
+    border-bottom: 1rpx dashed $color-divider;
+  }
+}
+
+.modalDailyDate {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-sm;
+}
+
+.modalDailyDateText {
+  font-size: $font-size-xs;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.modalDailyWeekday {
+  font-size: 20rpx;
+  color: $color-text-tertiary;
+}
+
+.modalDailyPrice {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-price;
+}
+
+.modalDailyTotal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md;
+  margin-top: $spacing-sm;
+  background: $color-accent-bg;
+  border-radius: $radius-md;
+}
+
+.modalDailyTotalLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.modalDailyTotalValue {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-price;
 }
 
 .formItem {
@@ -406,7 +925,7 @@
 }
 
 .depositOption {
-  padding: $spacing-sm $spacing-md;
+  padding: $spacing-sm $spacing-lg;
   background: $color-bg-section;
   border-radius: $radius-md;
   font-size: $font-size-sm;
@@ -420,39 +939,40 @@
     border-color: $color-primary;
     font-weight: $font-weight-medium;
   }
+
+  &:active {
+    transform: scale(0.96);
+  }
 }
 
 .modalSummary {
   background: $color-accent-bg;
   border-radius: $radius-md;
-  padding: $spacing-md;
+  padding: $spacing-md $spacing-lg;
   margin-top: $spacing-lg;
 }
 
-.summaryRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: $spacing-sm;
+.modalSummary .summaryRow {
+  padding: $spacing-sm 0;
 
   &:last-child {
-    margin-bottom: 0;
-    padding-top: $spacing-sm;
-    border-top: 1px dashed rgba(255, 140, 66, 0.3);
+    padding-top: $spacing-md;
+    border-top: 1rpx dashed rgba(255, 140, 66, 0.3);
+    margin-top: $spacing-sm;
   }
 }
 
-.summaryLabel {
+.modalSummary .summaryLabel {
   font-size: $font-size-sm;
   color: $color-text-secondary;
 }
 
-.summaryValue {
+.modalSummary .summaryValue {
   font-size: $font-size-sm;
   color: $color-text-primary;
 }
 
-.summaryTotal {
+.modalSummary .summaryTotal {
   font-size: $font-size-xl;
   font-weight: $font-weight-bold;
   color: $color-price;
@@ -462,7 +982,7 @@
   display: flex;
   gap: $spacing-md;
   padding: $spacing-lg;
-  border-top: 1px solid $color-divider;
+  border-top: 1rpx solid $color-divider;
 }
 
 .cancelBtn {

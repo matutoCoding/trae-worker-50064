@@ -1,56 +1,43 @@
 import React, { useState, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, Image, Button, Input } from '@tarojs/components';
+import { View, Text, ScrollView, Image, Button, Input, Textarea } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import styles from './index.module.scss';
 import { useAppStore } from '@/store';
-import { formatPrice } from '@/utils';
+import { formatPrice, getStatusText, getStatusColor } from '@/utils';
 import classnames from 'classnames';
+import type { Activity, ActivityBooking } from '@/types';
 
-type FilterType = 'all' | 'diving' | 'snorkeling' | 'fishing' | 'kayaking';
-
-interface MyBooking {
-  id: string;
-  activityId: string;
-  activityName: string;
-  participants: number;
-  guestName: string;
-  guestPhone: string;
-  bookingTime: string;
-}
+type RefundReasonType = 'typhoon' | 'personal' | 'other';
 
 const ActivityPage: React.FC = () => {
-  const [filter, setFilter] = useState<FilterType>('all');
+  const [activeTab, setActiveTab] = useState<'list' | 'my'>('list');
   const [showBookingModal, setShowBookingModal] = useState(false);
-  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(null);
+  const [showRefundModal, setShowRefundModal] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [selectedBooking, setSelectedBooking] = useState<ActivityBooking | null>(null);
   const [bookingForm, setBookingForm] = useState({
     participants: 1,
     guestName: '',
     guestPhone: ''
   });
-  const [myBookings, setMyBookings] = useState<MyBooking[]>([]);
+  const [refundForm, setRefundForm] = useState({
+    reasonType: 'personal' as RefundReasonType,
+    reason: '',
+    remark: ''
+  });
 
   const activities = useAppStore(state => state.activities);
+  const activityBookings = useAppStore(state => state.activityBookings);
   const bookActivity = useAppStore(state => state.bookActivity);
+  const addRefundRequest = useAppStore(state => state.addRefundRequest);
   const hydrate = useAppStore(state => state.hydrate);
 
   useDidShow(() => {
     hydrate();
-    const stored = Taro.getStorageSync('activity_bookings');
-    if (stored) {
-      setMyBookings(JSON.parse(stored));
-    }
   });
 
-  const filters: { id: FilterType; name: string; icon: string }[] = [
-    { id: 'all', name: '全部', icon: '🎯' },
-    { id: 'diving', name: '潜水', icon: '🤿' },
-    { id: 'snorkeling', name: '浮潜', icon: '🏊' },
-    { id: 'fishing', name: '海钓', icon: '🎣' },
-    { id: 'kayaking', name: '皮划艇', icon: '🚣' }
-  ];
-
   const typeNames: Record<string, string> = {
-    diving: '深潜',
+    diving: '潜水',
     snorkeling: '浮潜',
     fishing: '海钓',
     kayaking: '皮划艇',
@@ -63,28 +50,79 @@ const ActivityPage: React.FC = () => {
     hard: '困难'
   };
 
-  const filteredActivities = useMemo(() => {
-    if (filter === 'all') return activities;
-    return activities.filter(a => a.type === filter);
-  }, [filter, activities]);
+  const refundReasonTypeOptions: { id: RefundReasonType; name: string }[] = [
+    { id: 'typhoon', name: '台风停航' },
+    { id: 'personal', name: '个人原因' },
+    { id: 'other', name: '其他原因' }
+  ];
 
-  const handleBook = useCallback((activityId: string, activityName: string) => {
-    console.log('[Activity] 预约活动:', activityId, activityName);
-    const activity = activities.find(a => a.id === activityId);
-    if (!activity) return;
+  const isActivityExpired = useCallback((activity: Activity): boolean => {
+    const now = new Date();
+    const activityDateTime = new Date(`${activity.date}T${activity.endTime}:00`);
+    return now > activityDateTime;
+  }, []);
 
-    const remaining = activity.maxParticipants - activity.currentParticipants;
-    if (remaining <= 0) {
-      Taro.showToast({ title: '该活动已满员', icon: 'none' });
+  const canBook = useCallback((activity: Activity): boolean => {
+    if (activity.currentParticipants >= activity.maxParticipants) return false;
+    if (isActivityExpired(activity)) return false;
+    return true;
+  }, [isActivityExpired]);
+
+  const getButtonText = useCallback((activity: Activity): string => {
+    if (activity.currentParticipants >= activity.maxParticipants) return '已满员';
+    if (isActivityExpired(activity)) return '已过期';
+    return '立即预约';
+  }, [isActivityExpired]);
+
+  const sortedBookings = useMemo(() => {
+    return [...activityBookings].sort((a, b) => {
+      return new Date(b.bookingTime).getTime() - new Date(a.bookingTime).getTime();
+    });
+  }, [activityBookings]);
+
+  const openBookingModal = useCallback((activity: Activity) => {
+    if (!canBook(activity)) {
+      if (activity.currentParticipants >= activity.maxParticipants) {
+        Taro.showToast({ title: '该活动已满员', icon: 'none' });
+      } else if (isActivityExpired(activity)) {
+        Taro.showToast({ title: '该活动已过期', icon: 'none' });
+      }
       return;
     }
-
-    setSelectedActivityId(activityId);
+    setSelectedActivity(activity);
     setBookingForm({ participants: 1, guestName: '', guestPhone: '' });
     setShowBookingModal(true);
-  }, [activities]);
+  }, [canBook, isActivityExpired]);
+
+  const closeBookingModal = useCallback(() => {
+    setShowBookingModal(false);
+    setSelectedActivity(null);
+  }, []);
+
+  const remainingSlots = useMemo(() => {
+    if (!selectedActivity) return 0;
+    return selectedActivity.maxParticipants - selectedActivity.currentParticipants;
+  }, [selectedActivity]);
+
+  const totalPrice = useMemo(() => {
+    if (!selectedActivity) return 0;
+    return selectedActivity.price * bookingForm.participants;
+  }, [selectedActivity, bookingForm.participants]);
+
+  const handleParticipantsChange = useCallback((delta: number) => {
+    setBookingForm(prev => {
+      const newVal = prev.participants + delta;
+      const clamped = Math.max(1, Math.min(10, newVal));
+      if (clamped > remainingSlots && remainingSlots > 0) {
+        return { ...prev, participants: remainingSlots };
+      }
+      return { ...prev, participants: clamped };
+    });
+  }, [remainingSlots]);
 
   const handleBookingSubmit = useCallback(() => {
+    if (!selectedActivity) return;
+
     if (!bookingForm.guestName.trim()) {
       Taro.showToast({ title: '请输入姓名', icon: 'none' });
       return;
@@ -93,232 +131,483 @@ const ActivityPage: React.FC = () => {
       Taro.showToast({ title: '请输入电话', icon: 'none' });
       return;
     }
-    if (!selectedActivityId) return;
-
-    const activity = activities.find(a => a.id === selectedActivityId);
-    if (!activity) return;
-
-    const remaining = activity.maxParticipants - activity.currentParticipants;
-    if (remaining < bookingForm.participants) {
-      Taro.showToast({ title: `仅剩${remaining}个名额`, icon: 'none' });
+    if (!/^1[3-9]\d{9}$/.test(bookingForm.guestPhone.trim())) {
+      Taro.showToast({ title: '请输入正确的手机号', icon: 'none' });
+      return;
+    }
+    if (bookingForm.participants > remainingSlots) {
+      Taro.showToast({ title: `仅剩${remainingSlots}位可约`, icon: 'none' });
       return;
     }
 
     const success = bookActivity({
-      activityId: selectedActivityId,
-      activityName: activity.name,
+      activityId: selectedActivity.id,
+      activityName: selectedActivity.name,
+      guestName: bookingForm.guestName.trim(),
+      guestPhone: bookingForm.guestPhone.trim(),
       participants: bookingForm.participants,
-      guestName: bookingForm.guestName,
-      guestPhone: bookingForm.guestPhone
+      totalPrice
     });
 
     if (success) {
-      const newBooking: MyBooking = {
-        id: Math.random().toString(36).substring(2, 10),
-        activityId: selectedActivityId,
-        activityName: activity.name,
-        participants: bookingForm.participants,
-        guestName: bookingForm.guestName,
-        guestPhone: bookingForm.guestPhone,
-        bookingTime: new Date().toLocaleString('zh-CN')
-      };
-      const updatedBookings = [...myBookings, newBooking];
-      setMyBookings(updatedBookings);
-      Taro.setStorageSync('activity_bookings', JSON.stringify(updatedBookings));
-
-      setShowBookingModal(false);
-      setSelectedActivityId(null);
       Taro.showToast({ title: '预约成功', icon: 'success' });
+      closeBookingModal();
     } else {
-      Taro.showToast({ title: '预约失败', icon: 'none' });
+      Taro.showToast({ title: '预约失败，请重试', icon: 'none' });
     }
-  }, [selectedActivityId, bookingForm, activities, bookActivity, myBookings]);
+  }, [selectedActivity, bookingForm, remainingSlots, totalPrice, bookActivity, closeBookingModal]);
 
-  const handleActivityClick = useCallback((activityId: string) => {
-    console.log('[Activity] 查看详情:', activityId);
+  const openRefundModal = useCallback((booking: ActivityBooking) => {
+    setSelectedBooking(booking);
+    setRefundForm({ reasonType: 'personal', reason: '', remark: '' });
+    setShowRefundModal(true);
   }, []);
 
+  const closeRefundModal = useCallback(() => {
+    setShowRefundModal(false);
+    setSelectedBooking(null);
+  }, []);
+
+  const handleRefundSubmit = useCallback(() => {
+    if (!selectedBooking) return;
+
+    if (!refundForm.reason.trim()) {
+      Taro.showToast({ title: '请输入退订原因', icon: 'none' });
+      return;
+    }
+
+    addRefundRequest({
+      orderType: 'activity',
+      orderId: selectedBooking.id,
+      orderNo: selectedBooking.id,
+      guestName: selectedBooking.guestName,
+      reason: refundForm.reason.trim(),
+      reasonType: refundForm.reasonType,
+      refundAmount: selectedBooking.totalPrice,
+      totalAmount: selectedBooking.totalPrice
+    });
+
+    Taro.showToast({ title: '退订申请已提交', icon: 'success' });
+    closeRefundModal();
+  }, [selectedBooking, refundForm, addRefundRequest, closeRefundModal]);
+
+  const renderProgressBar = (current: number, max: number) => {
+    const percent = Math.min(100, Math.round((current / max) * 100));
+    const isFull = current >= max;
+    return (
+      <View className={styles.progressWrap}>
+        <View className={styles.progressBar}>
+          <View
+            className={classnames(styles.progressFill, isFull && styles.full)}
+            style={{ width: `${percent}%` }}
+          />
+        </View>
+        <View className={styles.progressText}>
+          <Text className={styles.progressCurrent}>{current}位已约</Text>
+          <Text className={styles.progressMax}>/ 共{max}位</Text>
+        </View>
+      </View>
+    );
+  };
+
   return (
-    <ScrollView className={styles.page} scrollY>
+    <View className={styles.page}>
       <View className={styles.header}>
         <Text className={styles.headerTitle}>海岛活动</Text>
         <Text className={styles.headerSubtitle}>潜水浮潜 · 海钓探险 · 尽享海岛乐趣</Text>
       </View>
 
-      <ScrollView className={styles.filterTabs} scrollX>
-        {filters.map(f => (
-          <View
-            key={f.id}
-            className={classnames(styles.tabItem, filter === f.id && styles.active)}
-            onClick={() => setFilter(f.id)}
-          >
-            {f.icon} {f.name}
-          </View>
-        ))}
-      </ScrollView>
-
-      <View className={styles.activityList}>
-        {filteredActivities.length > 0 ? (
-          filteredActivities.map(activity => {
-            const isFull = activity.currentParticipants >= activity.maxParticipants;
-            return (
-              <View
-                key={activity.id}
-                className={styles.activityCard}
-                onClick={() => handleActivityClick(activity.id)}
-              >
-                <View className={styles.activityImage}>
-                  <Image src={activity.image} mode='aspectFill' />
-                  <View className={styles.typeTag}>{typeNames[activity.type]}</View>
-                  <View className={styles.difficultyTag}>
-                    难度：{difficultyNames[activity.difficulty]}
-                  </View>
-                </View>
-
-                <View className={styles.activityContent}>
-                  <Text className={styles.activityTitle}>{activity.name}</Text>
-                  <Text className={styles.activityDesc}>{activity.description}</Text>
-
-                  <View className={styles.activityMeta}>
-                    <View className={styles.metaItem}>
-                      <Text className={styles.icon}>⏰</Text>
-                      <Text>{activity.duration}</Text>
-                    </View>
-                    <View className={styles.metaItem}>
-                      <Text className={styles.icon}>📍</Text>
-                      <Text>{activity.location}</Text>
-                    </View>
-                    <View className={styles.metaItem}>
-                      <Text className={styles.icon}>📅</Text>
-                      <Text>{activity.date} {activity.startTime}</Text>
-                    </View>
-                  </View>
-
-                  <View className={styles.includes}>
-                    {activity.includes.map((item, idx) => (
-                      <Text key={idx} className={styles.includeTag}>
-                        ✓ {item}
-                      </Text>
-                    ))}
-                  </View>
-
-                  <View className={styles.activityFooter}>
-                    <View>
-                      <View className={styles.priceWrap}>
-                        <Text className={styles.price}>{formatPrice(activity.price)}</Text>
-                        <Text className={styles.unit}>/人</Text>
-                      </View>
-                      <View className={styles.slotsInfo}>
-                        名额：
-                        {isFull ? (
-                          <Text className={styles.full}>已满</Text>
-                        ) : (
-                          <Text className={styles.slots}>
-                            {activity.maxParticipants - activity.currentParticipants}位可约
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                    <Button
-                      className={classnames(styles.bookBtn, isFull && styles.disabled)}
-                      disabled={isFull}
-                      onClick={(e) => {
-                        e.stopPropagation?.();
-                        if (!isFull) {
-                          handleBook(activity.id, activity.name);
-                        }
-                      }}
-                    >
-                      {isFull ? '已满员' : '立即预约'}
-                    </Button>
-                  </View>
-                </View>
-              </View>
-            );
-          })
-        ) : (
-          <View className={styles.emptyState}>
-            <View className={styles.icon}>🏝️</View>
-            <Text className={styles.text}>暂无相关活动</Text>
-          </View>
-        )}
-
-        {myBookings.length > 0 && (
-          <View className={styles.myBookingsSection}>
-            <View className={styles.sectionTitle}>
-              <Text className={styles.icon}>📋</Text>
-              <Text>我的预约</Text>
-            </View>
-
-            {myBookings.map(booking => (
-              <View key={booking.id} className={styles.bookingCard}>
-                <View className={styles.bookingIcon}>✅</View>
-                <View className={styles.bookingInfo}>
-                  <Text className={styles.bookingTitle}>{booking.activityName}</Text>
-                  <Text className={styles.bookingDesc}>
-                    人数: {booking.participants}人 · {booking.guestName}
-                  </Text>
-                  <Text className={styles.bookingDesc}>
-                    预约时间: {booking.bookingTime}
-                  </Text>
-                </View>
-                <Text className={styles.bookingStatus}>已确认</Text>
-              </View>
-            ))}
-          </View>
-        )}
+      <View className={styles.tabs}>
+        <View
+          className={classnames(styles.tab, activeTab === 'list' && styles.active)}
+          onClick={() => setActiveTab('list')}
+        >
+          <Text>🎯 活动列表</Text>
+          <View className={styles.tabBadge}>{activities.length}</View>
+        </View>
+        <View
+          className={classnames(styles.tab, activeTab === 'my' && styles.active)}
+          onClick={() => setActiveTab('my')}
+        >
+          <Text>📋 我的预约</Text>
+          <View className={styles.tabBadge}>{sortedBookings.length}</View>
+        </View>
       </View>
 
-      {showBookingModal && (
-        <View className={styles.modalMask}>
-          <View className={styles.modal}>
+      <ScrollView className={styles.content} scrollY>
+        {activeTab === 'list' && (
+          <View className={styles.activityList}>
+            {activities.length > 0 ? (
+              activities.map(activity => {
+                const remaining = activity.maxParticipants - activity.currentParticipants;
+                const bookable = canBook(activity);
+                const expired = isActivityExpired(activity);
+                return (
+                  <View key={activity.id} className={styles.activityCard}>
+                    <View className={styles.activityImageWrap}>
+                      <Image
+                        className={styles.activityImage}
+                        src={activity.image}
+                        mode='aspectFill'
+                      />
+                      <View className={styles.typeTag}>{typeNames[activity.type]}</View>
+                      <View
+                        className={classnames(
+                          styles.difficultyTag,
+                          styles[`difficulty-${activity.difficulty}`]
+                        )}
+                      >
+                        难度：{difficultyNames[activity.difficulty]}
+                      </View>
+                      {expired && (
+                        <View className={styles.expiredMask}>
+                          <Text className={styles.expiredText}>已过期</Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View className={styles.activityBody}>
+                      <View className={styles.activityHead}>
+                        <Text className={styles.activityName}>{activity.name}</Text>
+                        <View className={styles.durationTag}>
+                          <Text className={styles.durationIcon}>⏱</Text>
+                          <Text>{activity.duration}</Text>
+                        </View>
+                      </View>
+
+                      <View className={styles.activityInfo}>
+                        <View className={styles.infoRow}>
+                          <Text className={styles.infoIcon}>📅</Text>
+                          <Text className={styles.infoText}>
+                            {activity.date} {activity.startTime} - {activity.endTime}
+                          </Text>
+                        </View>
+                        <View className={styles.infoRow}>
+                          <Text className={styles.infoIcon}>📍</Text>
+                          <Text className={styles.infoText}>{activity.location}</Text>
+                        </View>
+                      </View>
+
+                      <View className={styles.slotsSection}>
+                        {renderProgressBar(activity.currentParticipants, activity.maxParticipants)}
+                        <View className={styles.slotsRemaining}>
+                          {remaining > 0 ? (
+                            <Text className={styles.remainingText}>
+                              剩余 <Text className={styles.remainingNum}>{remaining}</Text> 位
+                            </Text>
+                          ) : (
+                            <Text className={styles.fullText}>名额已满</Text>
+                          )}
+                        </View>
+                      </View>
+
+                      <View className={styles.activityFooter}>
+                        <View className={styles.priceSection}>
+                          <Text className={styles.priceSymbol}>¥</Text>
+                          <Text className={styles.priceValue}>{activity.price}</Text>
+                          <Text className={styles.priceUnit}>/人</Text>
+                        </View>
+                        <Button
+                          className={classnames(
+                            styles.bookButton,
+                            !bookable && styles.disabled
+                          )}
+                          disabled={!bookable}
+                          onClick={() => openBookingModal(activity)}
+                        >
+                          {getButtonText(activity)}
+                        </Button>
+                      </View>
+                    </View>
+                  </View>
+                );
+              })
+            ) : (
+              <View className={styles.emptyState}>
+                <Text className={styles.emptyIcon}>🏝️</Text>
+                <Text className={styles.emptyText}>暂无活动</Text>
+              </View>
+            )}
+          </View>
+        )}
+
+        {activeTab === 'my' && (
+          <View className={styles.bookingList}>
+            {sortedBookings.length > 0 ? (
+              sortedBookings.map(booking => {
+                const activity = activities.find(a => a.id === booking.activityId);
+                const statusColor = getStatusColor(booking.status, 'order');
+                const canRefund = booking.status === 'confirmed';
+                return (
+                  <View key={booking.id} className={styles.bookingCard}>
+                    <View className={styles.bookingHead}>
+                      <Text className={styles.bookingActivityName}>{booking.activityName}</Text>
+                      <View
+                        className={styles.bookingStatus}
+                        style={{ color: statusColor, borderColor: statusColor }}
+                      >
+                        {getStatusText(booking.status, 'order')}
+                      </View>
+                    </View>
+
+                    <View className={styles.bookingInfo}>
+                      <View className={styles.bookingInfoRow}>
+                        <Text className={styles.bookingInfoLabel}>预约时间</Text>
+                        <Text className={styles.bookingInfoValue}>{booking.bookingTime}</Text>
+                      </View>
+                      <View className={styles.bookingInfoRow}>
+                        <Text className={styles.bookingInfoLabel}>参与人数</Text>
+                        <Text className={styles.bookingInfoValue}>{booking.participants}人</Text>
+                      </View>
+                      <View className={styles.bookingInfoRow}>
+                        <Text className={styles.bookingInfoLabel}>联系人</Text>
+                        <Text className={styles.bookingInfoValue}>
+                          {booking.guestName} · {booking.guestPhone}
+                        </Text>
+                      </View>
+                      {activity && (
+                        <View className={styles.bookingInfoRow}>
+                          <Text className={styles.bookingInfoLabel}>活动时间</Text>
+                          <Text className={styles.bookingInfoValue}>
+                            {activity.date} {activity.startTime}-{activity.endTime}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+
+                    <View className={styles.bookingFoot}>
+                      <View className={styles.bookingTotal}>
+                        <Text className={styles.bookingTotalLabel}>总金额</Text>
+                        <View className={styles.bookingTotalPrice}>
+                          <Text className={styles.bookingTotalSymbol}>¥</Text>
+                          <Text className={styles.bookingTotalValue}>{booking.totalPrice}</Text>
+                        </View>
+                      </View>
+                      {canRefund && (
+                        <Button
+                          className={styles.refundButton}
+                          onClick={() => openRefundModal(booking)}
+                        >
+                          申请退订
+                        </Button>
+                      )}
+                    </View>
+                  </View>
+                );
+              })
+            ) : (
+              <View className={styles.emptyState}>
+                <Text className={styles.emptyIcon}>📋</Text>
+                <Text className={styles.emptyText}>暂无预约记录</Text>
+                <Text className={styles.emptySubText}>去活动列表看看吧~</Text>
+              </View>
+            )}
+          </View>
+        )}
+      </ScrollView>
+
+      {showBookingModal && selectedActivity && (
+        <View className={styles.modalMask} onClick={closeBookingModal}>
+          <View className={styles.modal} onClick={e => e.stopPropagation?.()}>
             <View className={styles.modalHeader}>
               <Text className={styles.modalTitle}>活动预约</Text>
-              <Text className={styles.modalClose} onClick={() => setShowBookingModal(false)}>×</Text>
+              <Text className={styles.modalClose} onClick={closeBookingModal}>×</Text>
             </View>
-            <View className={styles.modalBody}>
-              <View className={styles.formItem}>
-                <Text className={styles.formLabel}>姓名</Text>
-                <Input
-                  className={styles.formInput}
-                  placeholder='请输入姓名'
-                  value={bookingForm.guestName}
-                  onInput={e => setBookingForm({ ...bookingForm, guestName: e.detail.value })}
+
+            <ScrollView className={styles.modalBody} scrollY>
+              <View className={styles.modalActivityInfo}>
+                <Image
+                  className={styles.modalActivityImage}
+                  src={selectedActivity.image}
+                  mode='aspectFill'
                 />
-              </View>
-              <View className={styles.formItem}>
-                <Text className={styles.formLabel}>电话</Text>
-                <Input
-                  className={styles.formInput}
-                  type='number'
-                  placeholder='请输入电话'
-                  value={bookingForm.guestPhone}
-                  onInput={e => setBookingForm({ ...bookingForm, guestPhone: e.detail.value })}
-                />
-              </View>
-              <View className={styles.formItem}>
-                <Text className={styles.formLabel}>参与人数</Text>
-                <View className={styles.seatsSelector}>
-                  <Button
-                    className={styles.seatsBtn}
-                    onClick={() => setBookingForm({ ...bookingForm, participants: Math.max(1, bookingForm.participants - 1) })}
-                  >-</Button>
-                  <Text className={styles.seatsCount}>{bookingForm.participants}</Text>
-                  <Button
-                    className={styles.seatsBtn}
-                    onClick={() => setBookingForm({ ...bookingForm, participants: Math.min(10, bookingForm.participants + 1) })}
-                  >+</Button>
+                <View className={styles.modalActivityDetail}>
+                  <Text className={styles.modalActivityName}>{selectedActivity.name}</Text>
+                  <View className={styles.modalActivityMeta}>
+                    <Text className={styles.modalMetaItem}>📅 {selectedActivity.date}</Text>
+                    <Text className={styles.modalMetaItem}>🕐 {selectedActivity.startTime}-{selectedActivity.endTime}</Text>
+                  </View>
+                  <Text className={styles.modalMetaItem}>📍 {selectedActivity.location}</Text>
+                  <View className={styles.modalActivityPrice}>
+                    <Text className={styles.modalPriceLabel}>单价</Text>
+                    <Text className={styles.modalPriceValue}>{formatPrice(selectedActivity.price)}/人</Text>
+                    <Text className={styles.modalSlotsInfo}>
+                      剩余 <Text className={styles.modalSlotsNum}>{remainingSlots}</Text> 位可约
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
+
+              <View className={styles.formSection}>
+                <Text className={styles.formSectionTitle}>参与人数</Text>
+                <View className={styles.participantsSelector}>
+                  <Button
+                    className={classnames(
+                      styles.stepperBtn,
+                      bookingForm.participants <= 1 && styles.stepperDisabled
+                    )}
+                    disabled={bookingForm.participants <= 1}
+                    onClick={() => handleParticipantsChange(-1)}
+                  >-</Button>
+                  <View className={styles.participantsCount}>
+                    <Text className={styles.participantsNum}>{bookingForm.participants}</Text>
+                    <Text className={styles.participantsUnit}>人</Text>
+                  </View>
+                  <Button
+                    className={classnames(
+                      styles.stepperBtn,
+                      (bookingForm.participants >= 10 || bookingForm.participants >= remainingSlots) && styles.stepperDisabled
+                    )}
+                    disabled={bookingForm.participants >= 10 || bookingForm.participants >= remainingSlots}
+                    onClick={() => handleParticipantsChange(1)}
+                  >+</Button>
+                </View>
+                {remainingSlots < 10 && (
+                  <Text className={styles.slotsWarning}>最多可约 {remainingSlots} 位</Text>
+                )}
+              </View>
+
+              <View className={styles.formSection}>
+                <Text className={styles.formSectionTitle}>参与者信息</Text>
+                <View className={styles.formItem}>
+                  <Text className={styles.formLabel}>姓名</Text>
+                  <Input
+                    className={styles.formInput}
+                    placeholder='请输入姓名'
+                    placeholderClass={styles.placeholder}
+                    value={bookingForm.guestName}
+                    onInput={e => setBookingForm({ ...bookingForm, guestName: e.detail.value })}
+                    maxlength={20}
+                  />
+                </View>
+                <View className={styles.formItem}>
+                  <Text className={styles.formLabel}>电话</Text>
+                  <Input
+                    className={styles.formInput}
+                    type='number'
+                    placeholder='请输入手机号'
+                    placeholderClass={styles.placeholder}
+                    value={bookingForm.guestPhone}
+                    onInput={e => setBookingForm({ ...bookingForm, guestPhone: e.detail.value })}
+                    maxlength={11}
+                  />
+                </View>
+              </View>
+            </ScrollView>
+
             <View className={styles.modalFooter}>
-              <Button className={styles.modalBtnCancel} onClick={() => setShowBookingModal(false)}>取消</Button>
-              <Button className={styles.modalBtnConfirm} onClick={handleBookingSubmit}>确认预约</Button>
+              <View className={styles.totalSection}>
+                <Text className={styles.totalLabel}>总价</Text>
+                <View className={styles.totalPrice}>
+                  <Text className={styles.totalSymbol}>¥</Text>
+                  <Text className={styles.totalValue}>{totalPrice}</Text>
+                </View>
+                <Text className={styles.totalCalc}>
+                  {selectedActivity.price} × {bookingForm.participants}人
+                </Text>
+              </View>
+              <Button className={styles.submitButton} onClick={handleBookingSubmit}>
+                确认预约
+              </Button>
             </View>
           </View>
         </View>
       )}
-    </ScrollView>
+
+      {showRefundModal && selectedBooking && (
+        <View className={styles.modalMask} onClick={closeRefundModal}>
+          <View className={styles.modal} onClick={e => e.stopPropagation?.()}>
+            <View className={styles.modalHeader}>
+              <Text className={styles.modalTitle}>申请退订</Text>
+              <Text className={styles.modalClose} onClick={closeRefundModal}>×</Text>
+            </View>
+
+            <ScrollView className={styles.modalBody} scrollY>
+              <View className={styles.refundOrderInfo}>
+                <View className={styles.refundOrderRow}>
+                  <Text className={styles.refundOrderLabel}>活动名称</Text>
+                  <Text className={styles.refundOrderValue}>{selectedBooking.activityName}</Text>
+                </View>
+                <View className={styles.refundOrderRow}>
+                  <Text className={styles.refundOrderLabel}>预约时间</Text>
+                  <Text className={styles.refundOrderValue}>{selectedBooking.bookingTime}</Text>
+                </View>
+                <View className={styles.refundOrderRow}>
+                  <Text className={styles.refundOrderLabel}>参与人数</Text>
+                  <Text className={styles.refundOrderValue}>{selectedBooking.participants}人</Text>
+                </View>
+                <View className={styles.refundOrderRow}>
+                  <Text className={styles.refundOrderLabel}>退款金额</Text>
+                  <Text className={styles.refundAmount}>
+                    <Text className={styles.refundAmountSymbol}>¥</Text>
+                    <Text className={styles.refundAmountValue}>{selectedBooking.totalPrice}</Text>
+                  </Text>
+                </View>
+              </View>
+
+              <View className={styles.formSection}>
+                <Text className={styles.formSectionTitle}>退订原因类型</Text>
+                <View className={styles.reasonTypeList}>
+                  {refundReasonTypeOptions.map(opt => (
+                    <View
+                      key={opt.id}
+                      className={classnames(
+                        styles.reasonTypeItem,
+                        refundForm.reasonType === opt.id && styles.reasonTypeActive
+                      )}
+                      onClick={() => setRefundForm({ ...refundForm, reasonType: opt.id })}
+                    >
+                      <View
+                        className={classnames(
+                          styles.radio,
+                          refundForm.reasonType === opt.id && styles.radioChecked
+                        )}
+                      >
+                        {refundForm.reasonType === opt.id && <View className={styles.radioInner} />}
+                      </View>
+                      <Text>{opt.name}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              <View className={styles.formSection}>
+                <Text className={styles.formSectionTitle}>退订原因 <Text className={styles.required}>*</Text></Text>
+                <Textarea
+                  className={styles.formTextarea}
+                  placeholder='请详细描述退订原因...'
+                  placeholderClass={styles.placeholder}
+                  value={refundForm.reason}
+                  onInput={e => setRefundForm({ ...refundForm, reason: e.detail.value })}
+                  maxlength={200}
+                />
+              </View>
+
+              <View className={styles.formSection}>
+                <Text className={styles.formSectionTitle}>备注说明（选填）</Text>
+                <Textarea
+                  className={styles.formTextarea}
+                  placeholder='其他需要说明的信息...'
+                  placeholderClass={styles.placeholder}
+                  value={refundForm.remark}
+                  onInput={e => setRefundForm({ ...refundForm, remark: e.detail.value })}
+                  maxlength={200}
+                />
+              </View>
+            </ScrollView>
+
+            <View className={styles.modalFooter}>
+              <Button className={styles.cancelButton} onClick={closeRefundModal}>
+                取消
+              </Button>
+              <Button className={styles.refundSubmitButton} onClick={handleRefundSubmit}>
+                提交申请
+              </Button>
+            </View>
+          </View>
+        </View>
+      )}
+    </View>
   );
 };
 

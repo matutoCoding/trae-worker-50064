@@ -2,44 +2,199 @@
 
 .page {
   min-height: 100vh;
+  background: $color-bg-page;
 }
 
 .header {
   background: $gradient-primary;
-  padding: $spacing-lg $page-padding;
+  padding: $spacing-xl $page-padding $spacing-lg;
   color: $color-text-white;
 }
 
 .headerTitle {
   font-size: $font-size-xxl;
   font-weight: $font-weight-bold;
-  margin-bottom: $spacing-md;
+  margin-bottom: $spacing-lg;
 }
 
-.statsRow {
-  display: flex;
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: $spacing-md;
 }
 
-.statItem {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.2);
+.statCard {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  background: rgba(255, 255, 255, 0.18);
   border-radius: $radius-md;
   padding: $spacing-md;
-  text-align: center;
   backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
 
-  .value {
-    font-size: $font-size-xxl;
-    font-weight: $font-weight-bold;
-    line-height: 1.2;
-    display: block;
+.statIcon {
+  font-size: 40rpx;
+}
+
+.statContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.statValue {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  line-height: 1.2;
+  display: block;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  opacity: 0.9;
+  margin-top: 4rpx;
+  display: block;
+}
+
+.statClean {
+  background: linear-gradient(135deg, rgba(46, 204, 113, 0.25), rgba(255, 255, 255, 0.15));
+}
+
+.statDirty {
+  background: linear-gradient(135deg, rgba(243, 156, 18, 0.25), rgba(255, 255, 255, 0.15));
+}
+
+.statOccupied {
+  background: linear-gradient(135deg, rgba(0, 136, 204, 0.25), rgba(255, 255, 255, 0.15));
+}
+
+.statMaintenance {
+  background: linear-gradient(135deg, rgba(155, 89, 182, 0.25), rgba(255, 255, 255, 0.15));
+}
+
+.pageContent {
+  padding-bottom: 160rpx;
+}
+
+.pendingOrdersSection {
+  padding: $spacing-lg $page-padding;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.badge {
+  background: $color-primary;
+  color: $color-text-white;
+  font-size: $font-size-xs;
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+  min-width: 40rpx;
+  text-align: center;
+}
+
+.pendingOrdersList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.orderCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  box-shadow: $shadow-card;
+}
+
+.orderHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  background: linear-gradient(135deg, $color-primary-bg, rgba(0, 136, 204, 0.05));
+  border-bottom: 1px solid $color-divider;
+}
+
+.orderNo {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-primary;
+  font-family: 'Courier New', monospace;
+}
+
+.orderStatus {
+  font-size: $font-size-xs;
+  padding: 4rpx 16rpx;
+  background: $color-primary;
+  color: $color-text-white;
+  border-radius: $radius-xs;
+}
+
+.orderBody {
+  padding: $spacing-md $spacing-lg;
+}
+
+.orderRow {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: $spacing-sm;
+
+  &:last-child {
+    margin-bottom: 0;
   }
+}
 
-  .label {
-    font-size: $font-size-xs;
+.orderLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  width: 80rpx;
+  flex-shrink: 0;
+}
+
+.orderValue {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+}
+
+.orderPrice {
+  flex: 1;
+  font-size: $font-size-md;
+  font-weight: $font-weight-bold;
+  color: $color-accent;
+}
+
+.orderFooter {
+  padding: $spacing-md $spacing-lg;
+  border-top: 1px solid $color-divider;
+  background: $color-bg-section;
+}
+
+.assignBtn {
+  @include button-reset;
+  width: 100%;
+  height: $button-height-md;
+  background: $gradient-sunset;
+  color: $color-text-white;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+
+  &:active {
     opacity: 0.9;
-    margin-top: 4rpx;
+    transform: scale(0.98);
   }
 }
 
@@ -47,6 +202,7 @@
   display: flex;
   background: $color-bg-card;
   padding: $spacing-sm $page-padding;
+  border-top: 1px solid $color-divider;
   border-bottom: 1px solid $color-divider;
   gap: $spacing-md;
   overflow-x: auto;
@@ -59,7 +215,7 @@
   @include scroll-x-item(auto);
   display: inline-flex;
   align-items: center;
-  padding: 12rpx 28rpx;
+  padding: 12rpx 24rpx;
   background: $color-bg-section;
   border-radius: $radius-button;
   font-size: $font-size-sm;
@@ -68,46 +224,41 @@
   flex-shrink: 0;
   transition: all $transition-base;
   position: relative;
+  gap: 6rpx;
+}
+
+.tabIcon {
+  font-size: $font-size-sm;
+}
+
+.tabName {
+  font-size: $font-size-sm;
+}
+
+.count {
+  margin-left: 4rpx;
+  font-size: $font-size-xs;
+  background: rgba(0, 0, 0, 0.06);
+  padding: 2rpx 12rpx;
+  border-radius: $radius-round;
+  color: $color-text-secondary;
+  min-width: 36rpx;
+  text-align: center;
+}
+
+.tabItem.active {
+  background: $color-primary;
+  color: $color-text-white;
+  font-weight: $font-weight-medium;
 
   .count {
-    margin-left: 8rpx;
-    font-size: $font-size-xs;
-    background: rgba(0, 0, 0, 0.06);
-    padding: 2rpx 10rpx;
-    border-radius: $radius-round;
-  }
-
-  &.active {
-    background: $color-primary;
+    background: rgba(255, 255, 255, 0.25);
     color: $color-text-white;
-    font-weight: $font-weight-medium;
-
-    .count {
-      background: rgba(255, 255, 255, 0.2);
-    }
   }
 }
 
 .roomGrid {
   padding: $spacing-md $page-padding;
-  padding-bottom: 40rpx;
-}
-
-.floorSection {
-  margin-bottom: $spacing-lg;
-}
-
-.floorTitle {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-  margin-bottom: $spacing-md;
-  padding-left: $spacing-sm;
-  border-left: 6rpx solid $color-primary;
-  line-height: 1;
-}
-
-.roomGridList {
   display: flex;
   flex-wrap: wrap;
   gap: $spacing-md;
@@ -144,11 +295,17 @@
   }
 }
 
+.roomHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-xs;
+}
+
 .roomNumber {
   font-size: $font-size-xl;
   font-weight: $font-weight-bold;
   color: $color-text-primary;
-  margin-bottom: 4rpx;
 }
 
 .roomType {
@@ -186,17 +343,86 @@
   }
 }
 
-.roomGuest {
-  margin-top: $spacing-sm;
-  font-size: $font-size-xs;
-  color: $color-text-tertiary;
-  @include text-ellipsis;
+.guestInfo {
+  background: $color-bg-section;
+  border-radius: $radius-sm;
+  padding: $spacing-sm;
+  margin-bottom: $spacing-sm;
 }
 
-.roomDate {
+.guestName {
+  font-size: $font-size-xs;
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+  display: block;
+  margin-bottom: 4rpx;
+}
+
+.guestDate {
   font-size: $font-size-xs;
   color: $color-text-tertiary;
-  margin-top: 2rpx;
+  display: block;
+}
+
+.roomActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+}
+
+.roomActionBtn {
+  @include button-reset;
+  flex: 1;
+  min-width: calc(50% - 4rpx);
+  height: 56rpx;
+  border-radius: $radius-sm;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.96);
+  }
+
+  &.primaryBtn {
+    background: $color-primary;
+    color: $color-text-white;
+  }
+
+  &.successBtn {
+    background: $color-success;
+    color: $color-text-white;
+  }
+
+  &.warningBtn {
+    background: rgba(243, 156, 18, 0.12);
+    color: $color-warning;
+  }
+
+  &.dangerBtn {
+    background: $color-error;
+    color: $color-text-white;
+  }
+}
+
+.emptyState {
+  width: 100%;
+  padding: 60rpx 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyIcon {
+  font-size: 80rpx;
+  margin-bottom: $spacing-md;
+}
+
+.emptyText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
 }
 
 .actionBar {
@@ -223,27 +449,13 @@
   transition: all $transition-base;
 
   &.primary {
-    background: $color-primary;
+    background: $gradient-primary;
     color: $color-text-white;
 
     &:active {
-      background: $color-primary-dark;
       opacity: 0.9;
     }
   }
-
-  &.secondary {
-    background: $color-bg-section;
-    color: $color-text-primary;
-
-    &:active {
-      background: $color-bg-hover;
-    }
-  }
-}
-
-.pageContent {
-  padding-bottom: 140rpx;
 }
 
 .modalMask {
@@ -260,10 +472,17 @@
 }
 
 .modal {
-  width: 600rpx;
+  width: 620rpx;
+  max-height: 80vh;
   background: $color-bg-card;
   border-radius: $radius-lg;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.assignModal {
+  width: 640rpx;
 }
 
 .modalHeader {
@@ -280,14 +499,23 @@
   color: $color-text-primary;
 }
 
+.modalSubtitle {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  margin-top: 4rpx;
+  display: block;
+}
+
 .modalClose {
   font-size: 48rpx;
   color: $color-text-tertiary;
   line-height: 1;
+  padding: 0 8rpx;
 }
 
 .modalBody {
   padding: $spacing-lg;
+  flex-shrink: 0;
 }
 
 .modalFooter {
@@ -295,6 +523,7 @@
   padding: $spacing-md $spacing-lg;
   gap: $spacing-md;
   border-top: 1px solid $color-divider;
+  flex-shrink: 0;
 }
 
 .modalBtnCancel,
@@ -355,4 +584,65 @@
   color: $color-text-primary;
   background: $color-bg-section;
   box-sizing: border-box;
+}
+
+.orderSummary {
+  padding: $spacing-md $spacing-lg;
+  background: $color-primary-bg;
+  border-bottom: 1px solid $color-divider;
+}
+
+.orderSummaryText {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-medium;
+}
+
+.roomPickerList {
+  max-height: 500rpx;
+  flex: 1;
+  padding: $spacing-sm $spacing-lg;
+}
+
+.roomPickerItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-md;
+  background: $color-bg-section;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-sm;
+  transition: all $transition-base;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  &:active {
+    background: $color-primary-bg;
+  }
+}
+
+.roomPickerInfo {
+  flex: 1;
+}
+
+.roomPickerNumber {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  display: block;
+}
+
+.roomPickerDetail {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  margin-top: 4rpx;
+  display: block;
+}
+
+.roomPickerArrow {
+  font-size: $font-size-xl;
+  color: $color-primary;
+  font-weight: $font-weight-bold;
 }

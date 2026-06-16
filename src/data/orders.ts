@@ -1,4 +1,13 @@
-import type { BookingOrder, Room } from '@/types';
+import type { BookingOrder, Room, DailyPriceDetail } from '@/types';
+import { formatDate, getDateRange } from '@/utils';
+
+const buildDailyPrices = (checkIn: string, checkOut: string, basePrice: number): DailyPriceDetail[] => {
+  return getDateRange(checkIn, checkOut).map(date => {
+    const day = new Date(date).getDay();
+    const isWeekend = day === 5 || day === 6;
+    return { date, price: Math.round(basePrice * (isWeekend ? 1.2 : 1)) };
+  });
+};
 
 export const rooms: Room[] = [
   { id: 'r1', roomNumber: '101', typeId: '5', typeName: '经济标准间', floor: 1, status: 'clean', deposit: 200 },
@@ -34,6 +43,8 @@ export const bookingOrders: BookingOrder[] = [
     price: 688,
     totalAmount: 2064,
     deposit: 500,
+    dailyPrices: buildDailyPrices('2026-06-14', '2026-06-17', 688),
+    assignedRoomId: 'r8',
     status: 'checkedIn',
     createTime: '2026-06-10 14:30:00'
   },
@@ -52,6 +63,8 @@ export const bookingOrders: BookingOrder[] = [
     price: 588,
     totalAmount: 2352,
     deposit: 300,
+    dailyPrices: buildDailyPrices('2026-06-16', '2026-06-20', 588),
+    assignedRoomId: 'r5',
     status: 'checkedIn',
     createTime: '2026-06-12 09:15:00'
   },
@@ -70,6 +83,8 @@ export const bookingOrders: BookingOrder[] = [
     price: 1688,
     totalAmount: 8440,
     deposit: 1000,
+    dailyPrices: buildDailyPrices('2026-06-16', '2026-06-21', 1688),
+    assignedRoomId: 'r13',
     status: 'checkedIn',
     createTime: '2026-06-08 16:45:00',
     remark: '蜜月布置'
@@ -89,6 +104,8 @@ export const bookingOrders: BookingOrder[] = [
     price: 1088,
     totalAmount: 6528,
     deposit: 800,
+    dailyPrices: buildDailyPrices('2026-06-13', '2026-06-19', 1088),
+    assignedRoomId: 'r11',
     status: 'checkedIn',
     createTime: '2026-06-01 10:20:00',
     remark: '需要婴儿床'
@@ -107,6 +124,7 @@ export const bookingOrders: BookingOrder[] = [
     price: 298,
     totalAmount: 894,
     deposit: 200,
+    dailyPrices: buildDailyPrices('2026-06-20', '2026-06-23', 298),
     status: 'confirmed',
     createTime: '2026-06-14 11:30:00'
   },
@@ -124,6 +142,7 @@ export const bookingOrders: BookingOrder[] = [
     price: 688,
     totalAmount: 2752,
     deposit: 500,
+    dailyPrices: buildDailyPrices('2026-06-18', '2026-06-22', 688),
     status: 'confirmed',
     createTime: '2026-06-15 08:45:00',
     remark: '高层海景房'
@@ -142,6 +161,7 @@ export const bookingOrders: BookingOrder[] = [
     price: 788,
     totalAmount: 1576,
     deposit: 500,
+    dailyPrices: buildDailyPrices('2026-06-17', '2026-06-19', 788),
     status: 'pending',
     createTime: '2026-06-16 09:00:00'
   }

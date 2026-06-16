@@ -1,4 +1,23 @@
-import type { RoomType } from '@/types';
+import type { RoomType, DailyRate } from '@/types';
+import { formatDate } from '@/utils';
+
+const generateDailyRates = (basePrice: number, totalCount: number, days: number = 14): DailyRate[] => {
+  const rates: DailyRate[] = [];
+  const today = new Date();
+  for (let i = 0; i < days; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    const dayOfWeek = d.getDay();
+    const isWeekend = dayOfWeek === 5 || dayOfWeek === 6;
+    const price = Math.round(basePrice * (isWeekend ? 1.2 : 1) + (i > 7 ? 30 : 0));
+    rates.push({
+      date: formatDate(d),
+      price,
+      available: Math.max(1, Math.floor(totalCount * (0.3 + Math.random() * 0.5)))
+    });
+  }
+  return rates;
+};
 
 export const roomTypes: RoomType[] = [
   {
@@ -17,7 +36,8 @@ export const roomTypes: RoomType[] = [
     image: 'https://picsum.photos/id/1015/600/400',
     totalCount: 8,
     availableCount: 3,
-    isPeakSeason: true
+    isPeakSeason: true,
+    dailyRates: generateDailyRates(688, 8)
   },
   {
     id: '2',
@@ -35,7 +55,8 @@ export const roomTypes: RoomType[] = [
     image: 'https://picsum.photos/id/1018/600/400',
     totalCount: 12,
     availableCount: 5,
-    isPeakSeason: true
+    isPeakSeason: true,
+    dailyRates: generateDailyRates(588, 12)
   },
   {
     id: '3',
@@ -53,7 +74,8 @@ export const roomTypes: RoomType[] = [
     image: 'https://picsum.photos/id/1036/600/400',
     totalCount: 6,
     availableCount: 2,
-    isPeakSeason: true
+    isPeakSeason: true,
+    dailyRates: generateDailyRates(1088, 6)
   },
   {
     id: '4',
@@ -71,7 +93,8 @@ export const roomTypes: RoomType[] = [
     image: 'https://picsum.photos/id/1039/600/400',
     totalCount: 4,
     availableCount: 1,
-    isPeakSeason: true
+    isPeakSeason: true,
+    dailyRates: generateDailyRates(1688, 4)
   },
   {
     id: '5',
@@ -89,7 +112,8 @@ export const roomTypes: RoomType[] = [
     image: 'https://picsum.photos/id/1044/600/400',
     totalCount: 10,
     availableCount: 8,
-    isPeakSeason: false
+    isPeakSeason: false,
+    dailyRates: generateDailyRates(298, 10)
   },
   {
     id: '6',
@@ -107,7 +131,8 @@ export const roomTypes: RoomType[] = [
     image: 'https://picsum.photos/id/1048/600/400',
     totalCount: 5,
     availableCount: 0,
-    isPeakSeason: true
+    isPeakSeason: true,
+    dailyRates: generateDailyRates(788, 5)
   }
 ];
 

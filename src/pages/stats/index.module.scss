@@ -72,12 +72,63 @@
   }
 }
 
+.breakdownSection {
+  padding: 0 $page-padding;
+  margin-top: -40rpx;
+  position: relative;
+  z-index: 3;
+}
+
+.breakdownTitle {
+  display: block;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+  margin-bottom: $spacing-md;
+  opacity: 0.95;
+}
+
+.breakdownGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-md;
+}
+
+.breakdownCard {
+  border-radius: $radius-lg;
+  padding: $spacing-md;
+  color: $color-text-white;
+  box-shadow: $shadow-card;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  transition: transform $transition-base;
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+.breakdownIcon {
+  font-size: 40rpx;
+}
+
+.breakdownLabel {
+  font-size: $font-size-xs;
+  opacity: 0.9;
+}
+
+.breakdownValue {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+}
+
 .statsGrid {
   display: flex;
   flex-wrap: wrap;
   gap: $spacing-md;
   padding: 0 $page-padding;
-  margin-top: -$spacing-lg;
+  margin-top: $spacing-lg;
   position: relative;
   z-index: 2;
 }

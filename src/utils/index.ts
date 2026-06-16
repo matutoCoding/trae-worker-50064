@@ -25,6 +25,23 @@ export const calcNights = (checkIn: string, checkOut: string): number => {
   return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
 };
 
+export const getDateRange = (checkIn: string, checkOut: string): string[] => {
+  const dates: string[] = [];
+  const start = new Date(checkIn);
+  const end = new Date(checkOut);
+  const current = new Date(start);
+  while (current < end) {
+    dates.push(formatDate(current));
+    current.setDate(current.getDate() + 1);
+  }
+  return dates;
+};
+
+export const getWeekday = (dateStr: string): string => {
+  const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+  return weekdays[new Date(dateStr).getDay()];
+};
+
 export const getStatusText = (status: string, type: string = 'order'): string => {
   if (type === 'order') {
     const map: Record<string, string> = {

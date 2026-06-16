@@ -2,11 +2,14 @@
 
 .page {
   min-height: 100vh;
+  background: $color-bg-page;
+  display: flex;
+  flex-direction: column;
 }
 
 .header {
   background: $gradient-sunset;
-  padding: $spacing-lg $page-padding;
+  padding: $spacing-lg $page-padding $spacing-xl;
   color: $color-text-white;
   position: relative;
   overflow: hidden;
@@ -36,40 +39,66 @@
   z-index: 1;
 }
 
-.filterTabs {
+.tabs {
   display: flex;
   padding: $spacing-md $page-padding;
-  gap: $spacing-sm;
-  overflow-x: auto;
-  white-space: nowrap;
-
-  @include scroll-x-container;
+  gap: $spacing-md;
+  background: $color-bg-page;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  margin-top: -$spacing-lg;
+  border-radius: $radius-lg $radius-lg 0 0;
 }
 
-.tabItem {
-  @include scroll-x-item(auto);
-  display: inline-flex;
+.tab {
+  flex: 1;
+  display: flex;
   align-items: center;
-  padding: 14rpx 28rpx;
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-md;
   background: $color-bg-card;
-  border-radius: $radius-button;
-  font-size: $font-size-sm;
+  border-radius: $radius-md;
+  font-size: $font-size-md;
   color: $color-text-secondary;
-  margin-right: $spacing-sm;
-  flex-shrink: 0;
+  font-weight: $font-weight-medium;
   box-shadow: $shadow-card;
   transition: all $transition-base;
+  position: relative;
 
   &.active {
     background: $color-accent;
     color: $color-text-white;
-    font-weight: $font-weight-medium;
+    box-shadow: 0 4rpx 16rpx rgba($color-accent, 0.35);
   }
 }
 
-.activityList {
-  padding: 0 $page-padding;
-  padding-bottom: 40rpx;
+.tabBadge {
+  min-width: 36rpx;
+  height: 36rpx;
+  padding: 0 10rpx;
+  border-radius: $radius-round;
+  background: rgba(255, 255, 255, 0.25);
+  font-size: $font-size-xs;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+
+  .active & {
+    background: rgba(255, 255, 255, 0.3);
+  }
+}
+
+.content {
+  flex: 1;
+  padding: 0 $page-padding $spacing-xl;
+}
+
+.activityList,
+.bookingList {
+  padding-top: $spacing-md;
 }
 
 .activityCard {
@@ -78,244 +107,55 @@
   overflow: hidden;
   margin-bottom: $spacing-lg;
   box-shadow: $shadow-card;
-  transition: all $transition-base;
+}
 
-  &:active {
-    transform: scale(0.98);
-  }
+.activityImageWrap {
+  position: relative;
+  width: 100%;
+  height: 320rpx;
 }
 
 .activityImage {
-  position: relative;
   width: 100%;
-  height: 300rpx;
-
-  image {
-    width: 100%;
-    height: 100%;
-  }
-
-  .typeTag {
-    position: absolute;
-    top: $spacing-md;
-    left: $spacing-md;
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
-    font-size: $font-size-xs;
-    padding: 6rpx 16rpx;
-    border-radius: $radius-xs;
-    backdrop-filter: blur(4px);
-  }
-
-  .difficultyTag {
-    position: absolute;
-    top: $spacing-md;
-    right: $spacing-md;
-    background: $color-accent;
-    color: white;
-    font-size: $font-size-xs;
-    padding: 6rpx 16rpx;
-    border-radius: $radius-xs;
-  }
+  height: 100%;
 }
 
-.activityContent {
-  padding: $spacing-lg;
-}
-
-.activityTitle {
-  font-size: $font-size-xl;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-  margin-bottom: $spacing-sm;
-}
-
-.activityDesc {
-  font-size: $font-size-sm;
-  color: $color-text-secondary;
-  line-height: $line-height-tight;
-  margin-bottom: $spacing-md;
-  @include text-ellipsis-multi(2);
-}
-
-.activityMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-md;
-  margin-bottom: $spacing-md;
-}
-
-.metaItem {
-  display: flex;
-  align-items: center;
-  gap: 8rpx;
-  font-size: $font-size-sm;
-  color: $color-text-tertiary;
-
-  .icon {
-    font-size: 24rpx;
-  }
-}
-
-.includes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-xs;
-  margin-bottom: $spacing-lg;
-}
-
-.includeTag {
+.typeTag {
+  position: absolute;
+  top: $spacing-md;
+  left: $spacing-md;
+  background: rgba(0, 0, 0, 0.65);
+  color: white;
   font-size: $font-size-xs;
-  color: $color-primary;
-  background: $color-primary-bg;
-  padding: 4rpx 12rpx;
-  border-radius: $radius-xs;
-}
-
-.activityFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: $spacing-md;
-  border-top: 1px solid $color-divider;
-}
-
-.priceWrap {
-  display: flex;
-  align-items: baseline;
-  gap: 4rpx;
-
-  .price {
-    font-size: $font-size-xxl;
-    font-weight: $font-weight-bold;
-    color: $color-price;
-    line-height: 1;
-  }
-
-  .unit {
-    font-size: $font-size-sm;
-    color: $color-text-tertiary;
-  }
-}
-
-.bookBtn {
-  @include button-reset;
-  padding: 0 $spacing-xl;
-  height: $button-height-md;
-  background: $color-accent;
-  color: $color-text-white;
-  font-size: $font-size-md;
-  font-weight: $font-weight-medium;
-  border-radius: $radius-button;
-  transition: all $transition-base;
-
-  &:active {
-    background: darken($color-accent, 10%);
-    transform: scale(0.96);
-  }
-
-  &.disabled {
-    background: $color-text-disabled;
-  }
-}
-
-.slotsInfo {
-  font-size: $font-size-sm;
-  color: $color-text-secondary;
-  margin-top: 4rpx;
-
-  .slots {
-    color: $color-success;
-    font-weight: $font-weight-medium;
-  }
-
-  .full {
-    color: $color-error;
-    font-weight: $font-weight-medium;
-  }
-}
-
-.emptyState {
-  text-align: center;
-  padding: 80rpx $page-padding;
-  color: $color-text-tertiary;
-
-  .icon {
-    font-size: 80rpx;
-    margin-bottom: $spacing-md;
-  }
-
-  .text {
-    font-size: $font-size-md;
-  }
-}
-
-.myBookingsSection {
-  margin-top: $spacing-lg;
-}
-
-.sectionTitle {
-  font-size: $font-size-lg;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-  margin-bottom: $spacing-md;
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-
-  .icon {
-    font-size: 28rpx;
-  }
-}
-
-.bookingCard {
-  background: $color-bg-card;
-  border-radius: $radius-lg;
-  padding: $spacing-lg;
-  margin-bottom: $spacing-md;
-  box-shadow: $shadow-card;
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
-}
-
-.bookingIcon {
-  width: 80rpx;
-  height: 80rpx;
-  background: rgba(46, 204, 113, 0.1);
-  border-radius: $radius-md;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 40rpx;
-  flex-shrink: 0;
-}
-
-.bookingInfo {
-  flex: 1;
-  min-width: 0;
-}
-
-.bookingTitle {
-  font-size: $font-size-md;
-  font-weight: $font-weight-semibold;
-  color: $color-text-primary;
-  margin-bottom: 4rpx;
-}
-
-.bookingDesc {
-  font-size: $font-size-sm;
-  color: $color-text-secondary;
-}
-
-.bookingStatus {
-  font-size: $font-size-sm;
-  color: $color-success;
+  padding: 8rpx 20rpx;
+  border-radius: $radius-round;
+  backdrop-filter: blur(6px);
   font-weight: $font-weight-medium;
 }
 
-.modalMask {
-  position: fixed;
+.difficultyTag {
+  position: absolute;
+  top: $spacing-md;
+  right: $spacing-md;
+  font-size: $font-size-xs;
+  padding: 8rpx 20rpx;
+  border-radius: $radius-round;
+  color: white;
+  font-weight: $font-weight-medium;
+
+  &.difficulty-easy {
+    background: $color-success;
+  }
+  &.difficulty-medium {
+    background: $color-warning;
+  }
+  &.difficulty-hard {
+    background: $color-error;
+  }
+}
+
+.expiredMask {
+  position: absolute;
   top: 0;
   left: 0;
   right: 0;
@@ -324,14 +164,372 @@
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.expiredText {
+  font-size: $font-size-xl;
+  color: white;
+  font-weight: $font-weight-bold;
+  background: rgba(0, 0, 0, 0.6);
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $radius-md;
+}
+
+.activityBody {
+  padding: $spacing-lg;
+}
+
+.activityHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.activityName {
+  flex: 1;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  line-height: $line-height-tight;
+}
+
+.durationTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 6rpx 16rpx;
+  background: $color-primary-bg;
+  color: $color-primary;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  flex-shrink: 0;
+}
+
+.durationIcon {
+  font-size: 20rpx;
+}
+
+.activityInfo {
+  margin-bottom: $spacing-lg;
+}
+
+.infoRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-bottom: $spacing-xs;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.infoIcon {
+  font-size: 24rpx;
+  width: 32rpx;
+  text-align: center;
+}
+
+.infoText {
+  flex: 1;
+}
+
+.slotsSection {
+  padding: $spacing-md;
+  background: $color-bg-section;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-lg;
+}
+
+.progressWrap {
+  margin-bottom: $spacing-sm;
+}
+
+.progressBar {
+  width: 100%;
+  height: 12rpx;
+  background: rgba($color-primary, 0.12);
+  border-radius: $radius-round;
+  overflow: hidden;
+  margin-bottom: $spacing-xs;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, $color-primary, $color-accent);
+  border-radius: $radius-round;
+  transition: width $transition-base;
+
+  &.full {
+    background: linear-gradient(90deg, $color-error, darken($color-error, 10%));
+  }
+}
+
+.progressText {
+  display: flex;
+  align-items: baseline;
+  gap: 4rpx;
+  font-size: $font-size-xs;
+}
+
+.progressCurrent {
+  color: $color-text-primary;
+  font-weight: $font-weight-medium;
+}
+
+.progressMax {
+  color: $color-text-tertiary;
+}
+
+.slotsRemaining {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.remainingText {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+}
+
+.remainingNum {
+  color: $color-success;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  margin: 0 4rpx;
+}
+
+.fullText {
+  font-size: $font-size-sm;
+  color: $color-error;
+  font-weight: $font-weight-medium;
+}
+
+.activityFooter {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding-top: $spacing-md;
+  border-top: 1px solid $color-divider;
+}
+
+.priceSection {
+  display: flex;
+  align-items: baseline;
+}
+
+.priceSymbol {
+  font-size: $font-size-md;
+  color: $color-price;
+  font-weight: $font-weight-semibold;
+}
+
+.priceValue {
+  font-size: 48rpx;
+  color: $color-price;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+  margin: 0 4rpx;
+}
+
+.priceUnit {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.bookButton {
+  @include button-reset;
+  padding: 0 $spacing-xl;
+  height: $button-height-md;
+  background: $color-accent;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  border-radius: $radius-button;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.96);
+    background: darken($color-accent, 8%);
+  }
+
+  &.disabled {
+    background: $color-text-disabled !important;
+    color: $color-text-white;
+  }
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120rpx $page-padding;
+}
+
+.emptyIcon {
+  font-size: 120rpx;
+  margin-bottom: $spacing-md;
+}
+
+.emptyText {
+  font-size: $font-size-lg;
+  color: $color-text-secondary;
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-xs;
+}
+
+.emptySubText {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.bookingCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  margin-bottom: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.bookingHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-md;
+  padding-bottom: $spacing-md;
+  border-bottom: 1px solid $color-divider;
+  margin-bottom: $spacing-md;
+}
+
+.bookingActivityName {
+  flex: 1;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.bookingStatus {
+  flex-shrink: 0;
+  padding: 6rpx 20rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  border: 1px solid;
+  background: transparent;
+}
+
+.bookingInfo {
+  margin-bottom: $spacing-md;
+}
+
+.bookingInfoRow {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  margin-bottom: $spacing-sm;
+  font-size: $font-size-sm;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.bookingInfoLabel {
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+  width: 120rpx;
+}
+
+.bookingInfoValue {
+  flex: 1;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.bookingFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: $spacing-md;
+  border-top: 1px solid $color-divider;
+  gap: $spacing-md;
+}
+
+.bookingTotal {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-xs;
+}
+
+.bookingTotalLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.bookingTotalPrice {
+  display: flex;
+  align-items: baseline;
+}
+
+.bookingTotalSymbol {
+  font-size: $font-size-sm;
+  color: $color-price;
+  font-weight: $font-weight-semibold;
+}
+
+.bookingTotalValue {
+  font-size: $font-size-xxl;
+  color: $color-price;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+}
+
+.refundButton {
+  @include button-reset;
+  padding: 0 $spacing-lg;
+  height: $button-height-sm;
+  background: transparent;
+  color: $color-error;
+  border: 1px solid $color-error;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  border-radius: $radius-button;
+  transition: all $transition-base;
+
+  &:active {
+    background: rgba($color-error, 0.08);
+  }
+}
+
+.modalMask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 1000;
+  padding: $page-padding;
 }
 
 .modal {
-  width: 600rpx;
+  width: 100%;
+  max-width: 680rpx;
+  max-height: 85vh;
   background: $color-bg-card;
-  border-radius: $radius-lg;
+  border-radius: $radius-xl;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: $shadow-popup;
 }
 
 .modalHeader {
@@ -340,6 +538,7 @@
   justify-content: space-between;
   padding: $spacing-md $spacing-lg;
   border-bottom: 1px solid $color-divider;
+  flex-shrink: 0;
 }
 
 .modalTitle {
@@ -349,12 +548,19 @@
 }
 
 .modalClose {
-  font-size: 48rpx;
+  font-size: 56rpx;
   color: $color-text-tertiary;
   line-height: 1;
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .modalBody {
+  flex: 1;
+  overflow-y: auto;
   padding: $spacing-lg;
 }
 
@@ -363,26 +569,167 @@
   padding: $spacing-md $spacing-lg;
   gap: $spacing-md;
   border-top: 1px solid $color-divider;
+  flex-shrink: 0;
+  background: $color-bg-card;
 }
 
-.modalBtnCancel,
-.modalBtnConfirm {
-  @include button-reset;
-  flex: 1;
-  height: $button-height-md;
-  border-radius: $radius-button;
-  font-size: $font-size-md;
-  font-weight: $font-weight-medium;
-}
-
-.modalBtnCancel {
+.modalActivityInfo {
+  display: flex;
+  gap: $spacing-md;
+  padding: $spacing-md;
   background: $color-bg-section;
-  color: $color-text-primary;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-lg;
 }
 
-.modalBtnConfirm {
-  background: $color-accent;
-  color: $color-text-white;
+.modalActivityImage {
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: $radius-sm;
+  flex-shrink: 0;
+}
+
+.modalActivityDetail {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  min-width: 0;
+}
+
+.modalActivityName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  @include text-ellipsis;
+}
+
+.modalActivityMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.modalMetaItem {
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+  @include text-ellipsis;
+}
+
+.modalActivityPrice {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+  margin-top: auto;
+  padding-top: $spacing-xs;
+}
+
+.modalPriceLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.modalPriceValue {
+  font-size: $font-size-md;
+  color: $color-price;
+  font-weight: $font-weight-semibold;
+}
+
+.modalSlotsInfo {
+  margin-left: auto;
+  font-size: $font-size-xs;
+  color: $color-text-secondary;
+}
+
+.modalSlotsNum {
+  color: $color-success;
+  font-weight: $font-weight-bold;
+  font-size: $font-size-sm;
+}
+
+.formSection {
+  margin-bottom: $spacing-lg;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.formSectionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+  display: flex;
+  align-items: center;
+}
+
+.required {
+  color: $color-error;
+  margin-left: 4rpx;
+}
+
+.participantsSelector {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xl;
+  padding: $spacing-md;
+  background: $color-bg-section;
+  border-radius: $radius-md;
+}
+
+.stepperBtn {
+  @include button-reset;
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: $radius-md;
+  background: $color-accent-bg;
+  color: $color-accent;
+  font-size: 48rpx;
+  font-weight: $font-weight-bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all $transition-fast;
+
+  &:active {
+    transform: scale(0.92);
+  }
+
+  &.stepperDisabled {
+    background: $color-bg-section !important;
+    color: $color-text-disabled !important;
+  }
+}
+
+.participantsCount {
+  display: flex;
+  align-items: baseline;
+  gap: 4rpx;
+  min-width: 100rpx;
+  justify-content: center;
+}
+
+.participantsNum {
+  font-size: 56rpx;
+  font-weight: $font-weight-bold;
+  color: $color-text-primary;
+  line-height: 1;
+}
+
+.participantsUnit {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+}
+
+.slotsWarning {
+  display: block;
+  text-align: center;
+  font-size: $font-size-xs;
+  color: $color-warning;
+  margin-top: $spacing-sm;
 }
 
 .formItem {
@@ -398,45 +745,228 @@
   font-size: $font-size-sm;
   color: $color-text-secondary;
   margin-bottom: $spacing-sm;
+  font-weight: $font-weight-medium;
 }
 
 .formInput {
   width: 100%;
-  height: 80rpx;
+  height: 88rpx;
   padding: 0 $spacing-md;
   border: 1px solid $color-divider;
   border-radius: $radius-md;
   font-size: $font-size-md;
   color: $color-text-primary;
-  background: $color-bg-section;
+  background: $color-bg-card;
   box-sizing: border-box;
+  transition: all $transition-fast;
+
+  &:focus {
+    border-color: $color-accent;
+  }
 }
 
-.seatsSelector {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: $spacing-lg;
+.placeholder {
+  color: $color-text-tertiary;
 }
 
-.seatsBtn {
-  @include button-reset;
-  width: 80rpx;
-  height: 80rpx;
+.formTextarea {
+  width: 100%;
+  min-height: 180rpx;
+  padding: $spacing-md;
+  border: 1px solid $color-divider;
   border-radius: $radius-md;
-  background: $color-accent-bg;
-  color: $color-accent;
-  font-size: $font-size-xl;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  background: $color-bg-card;
+  box-sizing: border-box;
+  line-height: $line-height-normal;
+  transition: all $transition-fast;
+
+  &:focus {
+    border-color: $color-accent;
+  }
+}
+
+.totalSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.totalLabel {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.totalPrice {
+  display: flex;
+  align-items: baseline;
+}
+
+.totalSymbol {
+  font-size: $font-size-sm;
+  color: $color-price;
+  font-weight: $font-weight-semibold;
+}
+
+.totalValue {
+  font-size: $font-size-xxl;
+  color: $color-price;
   font-weight: $font-weight-bold;
+  line-height: 1;
+}
+
+.totalCalc {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+}
+
+.submitButton {
+  @include button-reset;
+  flex: 1;
+  min-width: 240rpx;
+  height: $button-height-md;
+  background: $color-accent;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  border-radius: $radius-button;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.97);
+    background: darken($color-accent, 8%);
+  }
+}
+
+.cancelButton {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-md;
+  background: $color-bg-section;
+  color: $color-text-primary;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  border-radius: $radius-button;
+  transition: all $transition-base;
+
+  &:active {
+    background: darken($color-bg-section, 5%);
+  }
+}
+
+.refundSubmitButton {
+  @include button-reset;
+  flex: 1;
+  height: $button-height-md;
+  background: $color-error;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  border-radius: $radius-button;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.97);
+    background: darken($color-error, 8%);
+  }
+}
+
+.refundOrderInfo {
+  padding: $spacing-md;
+  background: $color-bg-section;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-lg;
+}
+
+.refundOrderRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-md;
+  margin-bottom: $spacing-sm;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.refundOrderLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+}
+
+.refundOrderValue {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  text-align: right;
+  word-break: break-all;
+}
+
+.refundAmount {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.refundAmountSymbol {
+  font-size: $font-size-sm;
+  color: $color-price;
+  font-weight: $font-weight-semibold;
+}
+
+.refundAmountValue {
+  font-size: $font-size-xl;
+  color: $color-price;
+  font-weight: $font-weight-bold;
+  line-height: 1;
+}
+
+.reasonTypeList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.reasonTypeItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background: $color-bg-section;
+  border-radius: $radius-md;
+  border: 2px solid transparent;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  transition: all $transition-base;
+
+  &.reasonTypeActive {
+    background: rgba($color-accent, 0.06);
+    border-color: $color-accent;
+  }
+}
+
+.radio {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  border: 2px solid $color-text-disabled;
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  transition: all $transition-base;
+
+  &.radioChecked {
+    border-color: $color-accent;
+  }
 }
 
-.seatsCount {
-  font-size: $font-size-xxl;
-  font-weight: $font-weight-bold;
-  color: $color-text-primary;
-  min-width: 80rpx;
-  text-align: center;
+.radioInner {
+  width: 20rpx;
+  height: 20rpx;
+  border-radius: 50%;
+  background: $color-accent;
 }

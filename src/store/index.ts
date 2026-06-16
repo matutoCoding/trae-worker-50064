@@ -9,7 +9,9 @@ import type {
   Activity,
   ActivityBooking,
   DiningBooking,
-  RefundRequest
+  RefundRequest,
+  ShuttleBooking,
+  DailyPriceDetail
 } from '@/types';
 import { roomTypes as initRoomTypes } from '@/data/rooms';
 import { rooms as initRooms, bookingOrders as initOrders } from '@/data/orders';
@@ -17,8 +19,9 @@ import { ferries as initFerries, shuttles as initShuttles } from '@/data/ferries
 import { activities as initActivities, activityBookings as initActivityBookings } from '@/data/activities';
 import { diningBookings as initDiningBookings } from '@/data/dining';
 import { refundRequests as initRefundRequests } from '@/data/stats';
+import { formatDate, getDateRange } from '@/utils';
 
-const STORAGE_KEY = 'island_homestay_store_v1';
+const STORAGE_KEY = 'island_homestay_store_v2';
 
 interface AppState {
   // 数据
@@ -31,36 +34,64 @@ interface AppState {
   activityBookings: ActivityBooking[];
   diningBookings: DiningBooking[];
   refundRequests: RefundRequest[];
+  shuttleBookings: ShuttleBooking[];
 
   // 初始化
   initStore: () => void;
 
+  // 日期库存工具
+  getDailyRate: (roomTypeId: string, date: string) => number;
+  getDailyAvailable: (roomTypeId: string, date: string) => number;
+  checkRoomAvailability: (roomTypeId: string, checkIn: string, checkOut: string) => { available: boolean; dailyPrices: DailyPriceDetail[]; totalPrice: number };
+  deductDailyInventory: (roomTypeId: string, checkIn: string, checkOut: string) => boolean;
+  restoreDailyInventory: (roomTypeId: string, checkIn: string, checkOut: string) => boolean;
+
   // 房态预订
-  createBooking: (order: Omit<BookingOrder, 'id' | 'orderNo' | 'status' | 'createTime'>) => BookingOrder;
+  createBooking: (order: Omit<BookingOrder, 'id' | 'orderNo' | 'status' | 'createTime' | 'dailyPrices' | 'nights'> & { checkInDate: string; checkOutDate: string; roomTypeId: string }) => BookingOrder | null;
   updateRoomTypeAvailable: (roomTypeId: string, delta: number) => void;
   getNextOrderNo: () => string;
 
-  // 房间管理
+  // 房间管理 - 排房视图
+  assignRoomToOrder: (orderId: string, roomId: string) => boolean;
   updateRoomStatus: (roomId: string, status: Room['status'], guestInfo?: Partial<Room>) => void;
   batchCleanRooms: (roomIds: string[]) => void;
-  assignRoomToOrder: (orderId: string, roomId: string) => void;
+  getPendingOrders: () => BookingOrder[];
 
   // 船班接驳
-  bookFerry: (ferryId: string, seats: number) => boolean;
-  bookShuttle: (shuttleId: string, seats: number) => boolean;
-  addShuttleBooking: (booking: { ferryId: string; ferryName: string; guestName: string; guestPhone: string }) => void;
+  bookFerryAndShuttle: (data: {
+    ferryId?: string;
+    shuttleId?: string;
+    ferryName: string;
+    guestName: string;
+    guestPhone: string;
+    passengers: number;
+    type: 'ferry' | 'shuttle' | 'both';
+    date?: string;
+  }) => boolean;
+  getShuttleBookings: () => ShuttleBooking[];
 
   // 活动预约
   bookActivity: (booking: Omit<ActivityBooking, 'id' | 'status' | 'bookingTime'>) => boolean;
+  cancelActivityBooking: (bookingId: string) => boolean;
 
   // 餐饮预订
-  createDiningBooking: (booking: Omit<DiningBooking, 'id' | 'orderNo' | 'status'>) => DiningBooking;
+  createDiningBooking: (booking: Omit<DiningBooking, 'id' | 'orderNo' | 'status' | 'createTime'>) => DiningBooking | null;
+  getDiningRevenue: () => number;
 
-  // 退订处理
+  // 退订处理 - 多类型支持
+  addRefundRequest: (data: {
+    orderType: 'room' | 'activity' | 'dining';
+    orderId: string;
+    orderNo: string;
+    guestName: string;
+    reason: string;
+    reasonType: 'typhoon' | 'personal' | 'other';
+    refundAmount: number;
+    totalAmount: number;
+  }) => RefundRequest;
   approveRefund: (id: string, remark?: string) => void;
   rejectRefund: (id: string, remark?: string) => void;
   confirmRefund: (id: string) => void;
-  addRefundRequest: (request: Omit<RefundRequest, 'id' | 'status' | 'createTime'>) => RefundRequest;
 
   // 持久化
   persist: () => void;
@@ -80,12 +111,91 @@ export const useAppStore = create<AppState>((set, get) => ({
   activityBookings: initActivityBookings,
   diningBookings: initDiningBookings,
   refundRequests: initRefundRequests,
+  shuttleBookings: [],
 
   initStore: () => {
     const { hydrate } = get();
     hydrate();
   },
 
+  // ====== 日期库存相关 ======
+  getDailyRate: (roomTypeId, date) => {
+    const rt = get().roomTypes.find(r => r.id === roomTypeId);
+    if (!rt) return 0;
+    const rate = rt.dailyRates.find(d => d.date === date);
+    return rate ? rate.price : rt.price;
+  },
+
+  getDailyAvailable: (roomTypeId, date) => {
+    const rt = get().roomTypes.find(r => r.id === roomTypeId);
+    if (!rt) return 0;
+    const rate = rt.dailyRates.find(d => d.date === date);
+    return rate ? rate.available : rt.availableCount;
+  },
+
+  checkRoomAvailability: (roomTypeId, checkIn, checkOut) => {
+    const dates = getDateRange(checkIn, checkOut);
+    const rt = get().roomTypes.find(r => r.id === roomTypeId);
+    if (!rt || dates.length === 0) return { available: false, dailyPrices: [], totalPrice: 0 };
+
+    let available = true;
+    const dailyPrices: DailyPriceDetail[] = [];
+    let totalPrice = 0;
+
+    for (const date of dates) {
+      const avail = get().getDailyAvailable(roomTypeId, date);
+      const price = get().getDailyRate(roomTypeId, date);
+      if (avail <= 0) available = false;
+      dailyPrices.push({ date, price });
+      totalPrice += price;
+    }
+
+    return { available, dailyPrices, totalPrice };
+  },
+
+  deductDailyInventory: (roomTypeId, checkIn, checkOut) => {
+    const dates = getDateRange(checkIn, checkOut);
+    const { available } = get().checkRoomAvailability(roomTypeId, checkIn, checkOut);
+    if (!available) return false;
+
+    set(state => ({
+      roomTypes: state.roomTypes.map(rt => {
+        if (rt.id !== roomTypeId) return rt;
+        return {
+          ...rt,
+          availableCount: Math.max(0, rt.availableCount - 1),
+          dailyRates: rt.dailyRates.map(dr =>
+            dates.includes(dr.date)
+              ? { ...dr, available: Math.max(0, dr.available - 1) }
+              : dr
+          )
+        };
+      })
+    }));
+    return true;
+  },
+
+  restoreDailyInventory: (roomTypeId, checkIn, checkOut) => {
+    const dates = getDateRange(checkIn, checkOut);
+
+    set(state => ({
+      roomTypes: state.roomTypes.map(rt => {
+        if (rt.id !== roomTypeId) return rt;
+        return {
+          ...rt,
+          availableCount: Math.min(rt.totalCount, rt.availableCount + 1),
+          dailyRates: rt.dailyRates.map(dr =>
+            dates.includes(dr.date)
+              ? { ...dr, available: Math.min(rt.totalCount, dr.available + 1) }
+              : dr
+          )
+        };
+      })
+    }));
+    return true;
+  },
+
+  // ====== 房态预订 ======
   getNextOrderNo: () => {
     const now = new Date();
     const dateStr = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
@@ -96,25 +206,40 @@ export const useAppStore = create<AppState>((set, get) => ({
   },
 
   createBooking: (orderData) => {
-    const { getNextOrderNo, persist } = get();
+    const { getNextOrderNo, checkRoomAvailability, deductDailyInventory, persist } = get();
+    const { checkInDate, checkOutDate, roomTypeId } = orderData;
+
+    const { available, dailyPrices, totalPrice } = checkRoomAvailability(roomTypeId, checkInDate, checkOutDate);
+    if (!available) {
+      console.log('[Store] 库存不足，预订失败');
+      return null;
+    }
+
+    const success = deductDailyInventory(roomTypeId, checkInDate, checkOutDate);
+    if (!success) return null;
+
+    const nights = dailyPrices.length;
     const orderNo = getNextOrderNo();
+    const basePrice = dailyPrices.length > 0 ? dailyPrices[0].price : 0;
+
     const newOrder: BookingOrder = {
       ...orderData,
       id: generateId(),
       orderNo,
       status: 'confirmed',
-      createTime: new Date().toLocaleString('zh-CN')
+      createTime: new Date().toLocaleString('zh-CN'),
+      nights,
+      dailyPrices,
+      price: basePrice,
+      totalAmount: totalPrice
     };
 
     set(state => ({
       orders: [...state.orders, newOrder]
     }));
 
-    // 扣减库存
-    get().updateRoomTypeAvailable(orderData.roomTypeId, -1);
-
     persist();
-    console.log('[Store] 创建预订订单:', newOrder);
+    console.log('[Store] 创建预订订单:', newOrder.orderNo, totalPrice);
     return newOrder;
   },
 
@@ -127,6 +252,55 @@ export const useAppStore = create<AppState>((set, get) => ({
       )
     }));
     get().persist();
+  },
+
+  // ====== 房间管理 - 排房视图 ======
+  getPendingOrders: () => {
+    const today = formatDate(new Date());
+    return get().orders.filter(o =>
+      (o.status === 'confirmed' || o.status === 'pending') &&
+      o.checkInDate <= today && (!o.assignedRoomId)
+    );
+  },
+
+  assignRoomToOrder: (orderId, roomId) => {
+    const { rooms, orders, updateRoomStatus, persist } = get();
+    const room = rooms.find(r => r.id === roomId);
+    const order = orders.find(o => o.id === orderId);
+
+    if (!room || !order) {
+      console.log('[Store] 排房失败：房间或订单不存在');
+      return false;
+    }
+
+    if (room.status !== 'clean') {
+      console.log('[Store] 排房失败：房间非空净状态');
+      return false;
+    }
+
+    set(state => ({
+      orders: state.orders.map(o =>
+        o.id === orderId
+          ? {
+              ...o,
+              assignedRoomId: roomId,
+              roomNumber: room.roomNumber,
+              status: 'checkedIn'
+            }
+          : o
+      )
+    }));
+
+    updateRoomStatus(roomId, 'occupied', {
+      guestName: order.guestName,
+      guestPhone: order.guestPhone,
+      checkInDate: order.checkInDate,
+      checkOutDate: order.checkOutDate
+    });
+
+    persist();
+    console.log('[Store] 排房成功:', order.orderNo, '→', room.roomNumber);
+    return true;
   },
 
   updateRoomStatus: (roomId, status, guestInfo) => {
@@ -156,7 +330,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       )
     }));
     get().persist();
-    console.log('[Store] 更新房间状态:', roomId, status);
   },
 
   batchCleanRooms: (roomIds) => {
@@ -175,70 +348,76 @@ export const useAppStore = create<AppState>((set, get) => ({
       )
     }));
     get().persist();
-    console.log('[Store] 批量清洁房间:', roomIds);
   },
 
-  assignRoomToOrder: (orderId, roomId) => {
-    const { rooms, updateRoomStatus } = get();
-    const room = rooms.find(r => r.id === roomId);
-    if (room) {
+  // ====== 船班接驳 ======
+  bookFerryAndShuttle: (data) => {
+    const { ferries, shuttles, shuttleBookings, persist } = get();
+    const { ferryId, shuttleId, passengers, type } = data;
+
+    if (type === 'ferry' || type === 'both') {
+      if (!ferryId) return false;
+      const ferry = ferries.find(f => f.id === ferryId);
+      if (!ferry || ferry.status === 'cancelled' || ferry.availableSeats < passengers) {
+        return false;
+      }
+    }
+
+    if (type === 'shuttle' || type === 'both') {
+      if (!shuttleId) return false;
+      const shuttle = shuttles.find(s => s.id === shuttleId);
+      if (!shuttle || shuttle.bookedCount + passengers > shuttle.capacity) {
+        return false;
+      }
+    }
+
+    if (ferryId && (type === 'ferry' || type === 'both')) {
       set(state => ({
-        orders: state.orders.map(o =>
-          o.id === orderId
-            ? { ...o, roomNumber: room.roomNumber, status: 'checkedIn' }
-            : o
+        ferries: state.ferries.map(f =>
+          f.id === ferryId
+            ? { ...f, availableSeats: f.availableSeats - passengers }
+            : f
         )
       }));
-      updateRoomStatus(roomId, 'occupied');
-      get().persist();
     }
-  },
 
-  bookFerry: (ferryId, seats) => {
-    const { ferries, persist } = get();
-    const ferry = ferries.find(f => f.id === ferryId);
-    if (!ferry || ferry.status === 'cancelled' || ferry.availableSeats < seats) {
-      console.log('[Store] 船班预订失败:', ferryId, seats);
-      return false;
+    if (shuttleId && (type === 'shuttle' || type === 'both')) {
+      set(state => ({
+        shuttles: state.shuttles.map(s =>
+          s.id === shuttleId
+            ? { ...s, bookedCount: s.bookedCount + passengers }
+            : s
+        )
+      }));
     }
+
+    const booking: ShuttleBooking = {
+      id: generateId(),
+      ferryId,
+      shuttleId,
+      ferryName: data.ferryName,
+      guestName: data.guestName,
+      guestPhone: data.guestPhone,
+      passengers,
+      bookingTime: new Date().toLocaleString('zh-CN'),
+      type,
+      date: data.date
+    };
 
     set(state => ({
-      ferries: state.ferries.map(f =>
-        f.id === ferryId
-          ? { ...f, availableSeats: f.availableSeats - seats }
-          : f
-      )
+      shuttleBookings: [...state.shuttleBookings, booking]
     }));
+
     persist();
-    console.log('[Store] 船班预订成功:', ferryId, seats);
+    console.log('[Store] 接驳预约成功:', booking);
     return true;
   },
 
-  bookShuttle: (shuttleId, seats) => {
-    const { shuttles, persist } = get();
-    const shuttle = shuttles.find(s => s.id === shuttleId);
-    if (!shuttle || shuttle.bookedCount + seats > shuttle.capacity) {
-      console.log('[Store] 接驳预约失败:', shuttleId, seats);
-      return false;
-    }
-
-    set(state => ({
-      shuttles: state.shuttles.map(s =>
-        s.id === shuttleId
-          ? { ...s, bookedCount: s.bookedCount + seats }
-          : s
-      )
-    }));
-    persist();
-    console.log('[Store] 接驳预约成功:', shuttleId, seats);
-    return true;
+  getShuttleBookings: () => {
+    return [...get().shuttleBookings].reverse();
   },
 
-  addShuttleBooking: (booking) => {
-    console.log('[Store] 添加接驳预订记录:', booking);
-    get().persist();
-  },
-
+  // ====== 活动预约 ======
   bookActivity: (bookingData) => {
     const { activities, activityBookings, persist } = get();
     const activity = activities.find(a => a.id === bookingData.activityId);
@@ -246,7 +425,6 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     const remaining = activity.maxParticipants - activity.currentParticipants;
     if (remaining < bookingData.participants) {
-      console.log('[Store] 活动预约失败，名额不足:', bookingData);
       return false;
     }
 
@@ -267,10 +445,30 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
 
     persist();
-    console.log('[Store] 活动预约成功:', newBooking);
     return true;
   },
 
+  cancelActivityBooking: (bookingId) => {
+    const { activityBookings, activities, persist } = get();
+    const booking = activityBookings.find(b => b.id === bookingId);
+    if (!booking || booking.status === 'cancelled') return false;
+
+    set(state => ({
+      activityBookings: state.activityBookings.map(b =>
+        b.id === bookingId ? { ...b, status: 'cancelled' } : b
+      ),
+      activities: state.activities.map(a =>
+        a.id === booking.activityId
+          ? { ...a, currentParticipants: Math.max(0, a.currentParticipants - booking.participants) }
+          : a
+      )
+    }));
+
+    persist();
+    return true;
+  },
+
+  // ====== 餐饮预订 ======
   createDiningBooking: (bookingData) => {
     const { persist } = get();
     const now = new Date();
@@ -282,9 +480,11 @@ export const useAppStore = create<AppState>((set, get) => ({
 
     const newBooking: DiningBooking = {
       ...bookingData,
+      guests: bookingData.guestsCount,
       id: generateId(),
       orderNo,
-      status: 'confirmed'
+      status: 'confirmed',
+      createTime: now.toLocaleString('zh-CN')
     };
 
     set(state => ({
@@ -292,8 +492,32 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
 
     persist();
-    console.log('[Store] 餐饮预订成功:', newBooking);
+    console.log('[Store] 餐饮预订成功:', newBooking.orderNo);
     return newBooking;
+  },
+
+  getDiningRevenue: () => {
+    return get().diningBookings
+      .filter(d => d.status === 'confirmed' || d.status === 'completed')
+      .reduce((sum, d) => sum + d.totalAmount, 0);
+  },
+
+  // ====== 退订处理 - 多类型 ======
+  addRefundRequest: (data) => {
+    const { persist } = get();
+    const newRequest: RefundRequest = {
+      ...data,
+      id: generateId(),
+      status: 'pending',
+      createTime: new Date().toLocaleString('zh-CN')
+    };
+
+    set(state => ({
+      refundRequests: [...state.refundRequests, newRequest]
+    }));
+
+    persist();
+    return newRequest;
   },
 
   approveRefund: (id, remark) => {
@@ -309,8 +533,31 @@ export const useAppStore = create<AppState>((set, get) => ({
           : r
       )
     }));
+
+    const request = get().refundRequests.find(r => r.id === id);
+    if (request) {
+      if (request.orderType === 'room') {
+        set(state => ({
+          orders: state.orders.map(o =>
+            o.id === request.orderId ? { ...o, status: 'refunding' } : o
+          )
+        }));
+      } else if (request.orderType === 'activity') {
+        set(state => ({
+          activityBookings: state.activityBookings.map(b =>
+            b.id === request.orderId ? { ...b, status: 'refunding' } : b
+          )
+        }));
+      } else if (request.orderType === 'dining') {
+        set(state => ({
+          diningBookings: state.diningBookings.map(d =>
+            d.id === request.orderId ? { ...d, status: 'refunding' } : d
+          )
+        }));
+      }
+    }
+
     get().persist();
-    console.log('[Store] 退订申请已批准:', id);
   },
 
   rejectRefund: (id, remark) => {
@@ -326,28 +573,71 @@ export const useAppStore = create<AppState>((set, get) => ({
           : r
       )
     }));
-    get().persist();
-    console.log('[Store] 退订申请已拒绝:', id);
-  },
 
-  confirmRefund: (id) => {
-    const { refundRequests, updateRoomTypeAvailable, orders } = get();
-    const request = refundRequests.find(r => r.id === id);
-    
-    if (request && request.orderType === 'room') {
-      const order = orders.find(o => o.id === request.orderId);
-      if (order) {
-        // 退款后恢复库存
-        updateRoomTypeAvailable(order.roomTypeId, 1);
-        // 更新订单状态
+    const request = get().refundRequests.find(r => r.id === id);
+    if (request) {
+      if (request.orderType === 'room') {
         set(state => ({
           orders: state.orders.map(o =>
-            o.id === request.orderId
-              ? { ...o, status: 'refunded' }
-              : o
+            o.id === request.orderId ? { ...o, status: 'confirmed' } : o
+          )
+        }));
+      } else if (request.orderType === 'activity') {
+        set(state => ({
+          activityBookings: state.activityBookings.map(b =>
+            b.id === request.orderId ? { ...b, status: 'confirmed' } : b
+          )
+        }));
+      } else if (request.orderType === 'dining') {
+        set(state => ({
+          diningBookings: state.diningBookings.map(d =>
+            d.id === request.orderId ? { ...d, status: 'confirmed' } : d
           )
         }));
       }
+    }
+
+    get().persist();
+  },
+
+  confirmRefund: (id) => {
+    const { refundRequests, restoreDailyInventory, orders, activities, activityBookings, persist } = get();
+    const request = refundRequests.find(r => r.id === id);
+    if (!request) return;
+
+    if (request.orderType === 'room') {
+      const order = orders.find(o => o.id === request.orderId);
+      if (order) {
+        restoreDailyInventory(order.roomTypeId, order.checkInDate, order.checkOutDate);
+        set(state => ({
+          orders: state.orders.map(o =>
+            o.id === request.orderId ? { ...o, status: 'refunded' } : o
+          )
+        }));
+        if (order.assignedRoomId) {
+          get().updateRoomStatus(order.assignedRoomId, 'dirty');
+        }
+      }
+    } else if (request.orderType === 'activity') {
+      const booking = activityBookings.find(b => b.id === request.orderId);
+      if (booking) {
+        set(state => ({
+          activityBookings: state.activityBookings.map(b =>
+            b.id === request.orderId ? { ...b, status: 'refunded' } : b
+          ),
+          activities: state.activities.map(a =>
+            a.id === booking.activityId
+              ? { ...a, currentParticipants: Math.max(0, a.currentParticipants - booking.participants) }
+              : a
+          )
+        }));
+      }
+    } else if (request.orderType === 'dining') {
+      set(state => ({
+        diningBookings: state.diningBookings.map(d =>
+          d.id === request.orderId ? { ...d, status: 'refunded' } : d
+        )
+      }));
     }
 
     set(state => ({
@@ -362,28 +652,11 @@ export const useAppStore = create<AppState>((set, get) => ({
           : r
       )
     }));
-    get().persist();
-    console.log('[Store] 退款已完成:', id);
-  },
-
-  addRefundRequest: (requestData) => {
-    const { persist } = get();
-    const newRequest: RefundRequest = {
-      ...requestData,
-      id: generateId(),
-      status: 'pending',
-      createTime: new Date().toLocaleString('zh-CN')
-    };
-
-    set(state => ({
-      refundRequests: [...state.refundRequests, newRequest]
-    }));
 
     persist();
-    console.log('[Store] 添加退订申请:', newRequest);
-    return newRequest;
   },
 
+  // ====== 持久化 ======
   persist: () => {
     const state = get();
     const dataToPersist = {
@@ -395,7 +668,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       activities: state.activities,
       activityBookings: state.activityBookings,
       diningBookings: state.diningBookings,
-      refundRequests: state.refundRequests
+      refundRequests: state.refundRequests,
+      shuttleBookings: state.shuttleBookings
     };
     try {
       Taro.setStorageSync(STORAGE_KEY, JSON.stringify(dataToPersist));
@@ -418,7 +692,8 @@ export const useAppStore = create<AppState>((set, get) => ({
           activities: data.activities || initActivities,
           activityBookings: data.activityBookings || initActivityBookings,
           diningBookings: data.diningBookings || initDiningBookings,
-          refundRequests: data.refundRequests || initRefundRequests
+          refundRequests: data.refundRequests || initRefundRequests,
+          shuttleBookings: data.shuttleBookings || []
         });
         console.log('[Store] 从本地存储恢复状态');
       }
@@ -442,8 +717,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       activities: initActivities,
       activityBookings: initActivityBookings,
       diningBookings: initDiningBookings,
-      refundRequests: initRefundRequests
+      refundRequests: initRefundRequests,
+      shuttleBookings: []
     });
-    console.log('[Store] 已重置为初始状态');
   }
 }));

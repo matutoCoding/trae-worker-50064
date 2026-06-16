@@ -1,3 +1,10 @@
+// 每日房价库存
+export interface DailyRate {
+  date: string;
+  price: number;
+  available: number;
+}
+
 // 房型
 export interface RoomType {
   id: string;
@@ -16,6 +23,7 @@ export interface RoomType {
   totalCount: number;
   availableCount: number;
   isPeakSeason: boolean;
+  dailyRates: DailyRate[];
 }
 
 // 房间
@@ -33,6 +41,12 @@ export interface Room {
   deposit: number;
 }
 
+// 每日房价明细
+export interface DailyPriceDetail {
+  date: string;
+  price: number;
+}
+
 // 订单
 export interface BookingOrder {
   id: string;
@@ -42,6 +56,7 @@ export interface BookingOrder {
   roomNumber?: string;
   guestName: string;
   guestPhone: string;
+  idCard?: string;
   checkInDate: string;
   checkOutDate: string;
   nights: number;
@@ -49,6 +64,8 @@ export interface BookingOrder {
   price: number;
   totalAmount: number;
   deposit: number;
+  dailyPrices: DailyPriceDetail[];
+  assignedRoomId?: string;
   status: 'pending' | 'confirmed' | 'checkedIn' | 'checkedOut' | 'cancelled' | 'refunding' | 'refunded';
   createTime: string;
   remark?: string;
@@ -111,7 +128,7 @@ export interface ActivityBooking {
   guestPhone: string;
   participants: number;
   totalPrice: number;
-  status: 'confirmed' | 'cancelled' | 'completed';
+  status: 'confirmed' | 'cancelled' | 'completed' | 'refunding' | 'refunded';
   bookingTime: string;
 }
 
@@ -137,11 +154,13 @@ export interface DiningBooking {
   date: string;
   time: string;
   guestsCount: number;
+  guests: number;
   tableNumber?: string;
   dishes: { dishId: string; dishName: string; quantity: number; price: number }[];
   totalAmount: number;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'refunding' | 'refunded';
   remark?: string;
+  createTime?: string;
 }
 
 // 退订申请
@@ -205,4 +224,19 @@ export interface ServiceEntry {
   pagePath: string;
   color: string;
   bgColor: string;
+}
+
+// 船班接驳预约记录
+export interface ShuttleBooking {
+  id: string;
+  ferryId?: string;
+  shuttleId?: string;
+  ferryName: string;
+  guestName: string;
+  guestPhone: string;
+  passengers: number;
+  bookingTime: string;
+  type: 'ferry' | 'shuttle' | 'both';
+  totalPrice?: number;
+  date?: string;
 }
