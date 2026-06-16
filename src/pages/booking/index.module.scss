@@ -1,0 +1,136 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+}
+
+.header {
+  padding: $spacing-lg $page-padding;
+  background: $gradient-primary;
+  color: $color-text-white;
+}
+
+.headerTitle {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-xs;
+}
+
+.headerSubtitle {
+  font-size: $font-size-sm;
+  opacity: 0.9;
+}
+
+.dateSelector {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-top: $spacing-lg;
+  backdrop-filter: blur(10px);
+}
+
+.dateItem {
+  flex: 1;
+  text-align: center;
+
+  .label {
+    font-size: $font-size-xs;
+    opacity: 0.8;
+    margin-bottom: 4rpx;
+    display: block;
+  }
+
+  .value {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.dateArrow {
+  font-size: 32rpx;
+  opacity: 0.6;
+  padding: 0 $spacing-sm;
+}
+
+.nightsBadge {
+  position: absolute;
+  top: -20rpx;
+  right: -16rpx;
+  background: $color-accent;
+  color: white;
+  font-size: $font-size-xs;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-round;
+  font-weight: $font-weight-medium;
+}
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md $page-padding;
+  background: $color-bg-card;
+  border-bottom: 1px solid $color-divider;
+  gap: $spacing-md;
+  overflow-x: auto;
+  white-space: nowrap;
+
+  @include scroll-x-container;
+}
+
+.filterItem {
+  @include scroll-x-item(auto);
+  display: inline-flex;
+  align-items: center;
+  padding: 12rpx 24rpx;
+  background: $color-bg-section;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-right: $spacing-sm;
+  flex-shrink: 0;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-primary-bg;
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.roomList {
+  padding: $spacing-md $page-padding;
+  padding-bottom: 40rpx;
+}
+
+.sectionTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin: $spacing-md 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  .count {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    font-weight: normal;
+  }
+}
+
+.emptyState {
+  text-align: center;
+  padding: 80rpx $page-padding;
+  color: $color-text-tertiary;
+
+  .icon {
+    font-size: 80rpx;
+    margin-bottom: $spacing-md;
+  }
+
+  .text {
+    font-size: $font-size-md;
+  }
+}

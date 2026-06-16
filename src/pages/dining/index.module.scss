@@ -1,0 +1,330 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+}
+
+.header {
+  background: linear-gradient(135deg, #e74c3c 0%, #ff6b6b 100%);
+  padding: $spacing-lg $page-padding;
+  color: $color-text-white;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '🦞';
+    position: absolute;
+    right: 10rpx;
+    bottom: -10rpx;
+    font-size: 200rpx;
+    opacity: 0.15;
+  }
+}
+
+.headerTitle {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-xs;
+  position: relative;
+  z-index: 1;
+}
+
+.headerSubtitle {
+  font-size: $font-size-sm;
+  opacity: 0.95;
+  position: relative;
+  z-index: 1;
+}
+
+.bookingBar {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-top: $spacing-lg;
+  backdrop-filter: blur(10px);
+  position: relative;
+  z-index: 1;
+}
+
+.bookingItem {
+  flex: 1;
+  text-align: center;
+
+  .label {
+    font-size: $font-size-xs;
+    opacity: 0.85;
+    margin-bottom: 4rpx;
+    display: block;
+  }
+
+  .value {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+  }
+}
+
+.bookingDivider {
+  width: 1px;
+  height: 48rpx;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.categories {
+  display: flex;
+  padding: $spacing-md $page-padding;
+  gap: $spacing-sm;
+  overflow-x: auto;
+  white-space: nowrap;
+  background: $color-bg-page;
+
+  @include scroll-x-container;
+}
+
+.categoryItem {
+  @include scroll-x-item(auto);
+  display: inline-flex;
+  align-items: center;
+  padding: 14rpx 28rpx;
+  background: $color-bg-card;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-right: $spacing-sm;
+  flex-shrink: 0;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-error;
+    color: $color-text-white;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.dishList {
+  padding: $spacing-md $page-padding;
+  padding-bottom: 160rpx;
+}
+
+.dishCard {
+  display: flex;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  margin-bottom: $spacing-md;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.dishImage {
+  width: 220rpx;
+  height: 220rpx;
+  flex-shrink: 0;
+  position: relative;
+
+  image {
+    width: 100%;
+    height: 100%;
+  }
+
+  .recommendTag {
+    position: absolute;
+    top: $spacing-sm;
+    left: $spacing-sm;
+    background: $color-accent;
+    color: white;
+    font-size: $font-size-xs;
+    padding: 4rpx 12rpx;
+    border-radius: $radius-xs;
+    font-weight: $font-weight-medium;
+  }
+
+  .spicyTag {
+    position: absolute;
+    top: $spacing-sm;
+    right: $spacing-sm;
+    background: $color-error;
+    color: white;
+    font-size: $font-size-xs;
+    padding: 4rpx 10rpx;
+    border-radius: $radius-xs;
+  }
+}
+
+.dishInfo {
+  flex: 1;
+  padding: $spacing-md;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.dishName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-xs;
+  @include text-ellipsis;
+}
+
+.dishDesc {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-tight;
+  flex: 1;
+  @include text-ellipsis-multi(2);
+}
+
+.dishFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: $spacing-sm;
+}
+
+.dishPrice {
+  display: flex;
+  align-items: baseline;
+  gap: 2rpx;
+
+  .symbol {
+    font-size: $font-size-sm;
+    color: $color-price;
+    font-weight: $font-weight-medium;
+  }
+
+  .price {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: $color-price;
+    line-height: 1;
+  }
+
+  .unit {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+  }
+}
+
+.quantityControl {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.quantityBtn {
+  @include button-reset;
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-lg;
+  background: $color-bg-section;
+  color: $color-text-secondary;
+  transition: all $transition-base;
+
+  &:active {
+    background: $color-bg-hover;
+  }
+
+  &.add {
+    background: $color-error;
+    color: white;
+
+    &:active {
+      background: darken($color-error, 10%);
+    }
+  }
+}
+
+.quantityValue {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  min-width: 48rpx;
+  text-align: center;
+}
+
+.bottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: $color-bg-card;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+  z-index: 100;
+}
+
+.totalInfo {
+  flex: 1;
+
+  .totalPrice {
+    display: flex;
+    align-items: baseline;
+    gap: 4rpx;
+
+    .symbol {
+      font-size: $font-size-sm;
+      color: $color-price;
+      font-weight: $font-weight-medium;
+    }
+
+    .price {
+      font-size: $font-size-xxl;
+      font-weight: $font-weight-bold;
+      color: $color-price;
+      line-height: 1;
+    }
+  }
+
+  .totalCount {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    margin-top: 4rpx;
+  }
+}
+
+.submitBtn {
+  @include button-reset;
+  padding: 0 $spacing-xl;
+  height: $button-height-lg;
+  background: $color-error;
+  color: $color-text-white;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  border-radius: $radius-button;
+  transition: all $transition-base;
+
+  &:active {
+    background: darken($color-error, 10%);
+    transform: scale(0.96);
+  }
+
+  &.disabled {
+    background: $color-text-disabled;
+  }
+}
+
+.emptyState {
+  text-align: center;
+  padding: 80rpx $page-padding;
+  color: $color-text-tertiary;
+
+  .icon {
+    font-size: 80rpx;
+    margin-bottom: $spacing-md;
+  }
+
+  .text {
+    font-size: $font-size-md;
+  }
+}

@@ -1,0 +1,367 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  padding-bottom: 40rpx;
+}
+
+.header {
+  background: $gradient-primary;
+  padding: $spacing-xl $page-padding;
+  color: $color-text-white;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -60rpx;
+    right: -60rpx;
+    width: 240rpx;
+    height: 240rpx;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+  }
+}
+
+.headerTitle {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-xs;
+}
+
+.headerDate {
+  font-size: $font-size-sm;
+  opacity: 0.85;
+}
+
+.totalRevenue {
+  margin-top: $spacing-lg;
+
+  .label {
+    font-size: $font-size-sm;
+    opacity: 0.9;
+    margin-bottom: $spacing-xs;
+  }
+
+  .amount {
+    font-size: 64rpx;
+    font-weight: $font-weight-bold;
+    line-height: 1.1;
+
+    .symbol {
+      font-size: $font-size-xl;
+      margin-right: 4rpx;
+    }
+  }
+
+  .trend {
+    margin-top: $spacing-xs;
+    font-size: $font-size-sm;
+    display: flex;
+    align-items: center;
+    gap: 8rpx;
+
+    .up {
+      color: #7bed9f;
+    }
+
+    .down {
+      color: #ff6b6b;
+    }
+  }
+}
+
+.statsGrid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  padding: 0 $page-padding;
+  margin-top: -$spacing-lg;
+  position: relative;
+  z-index: 2;
+}
+
+.statsCard {
+  width: calc(50% - 12rpx);
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+
+  .label {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    margin-bottom: $spacing-sm;
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+
+    .icon {
+      font-size: 28rpx;
+    }
+  }
+
+  .value {
+    font-size: $font-size-xxl;
+    font-weight: $font-weight-bold;
+    color: $color-text-primary;
+    line-height: 1.2;
+  }
+
+  .unit {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    margin-left: 4rpx;
+    font-weight: normal;
+  }
+
+  .subText {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    margin-top: 4rpx;
+  }
+}
+
+.section {
+  padding: 0 $page-padding;
+  margin-top: $spacing-xl;
+}
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-md;
+
+  .title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+  }
+
+  .more {
+    font-size: $font-size-sm;
+    color: $color-primary;
+  }
+}
+
+.chartCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.chartTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-lg;
+}
+
+.chartBars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 240rpx;
+  gap: $spacing-sm;
+}
+
+.chartBar {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  justify-content: flex-end;
+
+  .bar {
+    width: 100%;
+    max-width: 40rpx;
+    background: $gradient-primary;
+    border-radius: $radius-xs $radius-xs 0 0;
+    min-height: 8rpx;
+    transition: all $transition-base;
+    position: relative;
+
+    .barValue {
+      position: absolute;
+      top: -36rpx;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 20rpx;
+      color: $color-text-secondary;
+      white-space: nowrap;
+    }
+  }
+
+  .label {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    margin-top: $spacing-sm;
+  }
+}
+
+.reviewSection {
+  padding: 0 $page-padding;
+  margin-top: $spacing-xl;
+}
+
+.reviewSummary {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  display: flex;
+  align-items: center;
+  gap: $spacing-lg;
+  margin-bottom: $spacing-md;
+}
+
+.ratingBig {
+  text-align: center;
+
+  .score {
+    font-size: 56rpx;
+    font-weight: $font-weight-bold;
+    color: $color-accent;
+    line-height: 1;
+  }
+
+  .stars {
+    font-size: $font-size-sm;
+    color: $color-accent;
+    margin-top: 4rpx;
+  }
+
+  .count {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    margin-top: 4rpx;
+  }
+}
+
+.ratingBars {
+  flex: 1;
+}
+
+.ratingBarItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  margin-bottom: 8rpx;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  .stars {
+    font-size: $font-size-xs;
+    color: $color-accent;
+    width: 60rpx;
+  }
+
+  .bar {
+    flex: 1;
+    height: 8rpx;
+    background: $color-bg-section;
+    border-radius: $radius-round;
+    overflow: hidden;
+
+    .fill {
+      height: 100%;
+      background: $color-accent;
+      border-radius: $radius-round;
+    }
+  }
+
+  .pct {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+    width: 60rpx;
+    text-align: right;
+  }
+}
+
+.reviewList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.reviewCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+}
+
+.reviewHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.reviewAvatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: $radius-round;
+  background: $color-bg-section;
+  flex-shrink: 0;
+  overflow: hidden;
+
+  image {
+    width: 100%;
+    height: 100%;
+  }
+}
+
+.reviewInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.reviewName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-primary;
+  margin-bottom: 2rpx;
+}
+
+.reviewMeta {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.reviewStars {
+  color: $color-accent;
+  font-size: $font-size-sm;
+}
+
+.reviewContent {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-normal;
+  margin-bottom: $spacing-md;
+}
+
+.reviewReply {
+  background: $color-bg-section;
+  border-radius: $radius-sm;
+  padding: $spacing-md;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-tight;
+
+  .replyLabel {
+    color: $color-primary;
+    font-weight: $font-weight-medium;
+    margin-bottom: 4rpx;
+    display: block;
+  }
+}

@@ -1,0 +1,251 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+}
+
+.header {
+  background: $gradient-sunset;
+  padding: $spacing-lg $page-padding;
+  color: $color-text-white;
+  position: relative;
+  overflow: hidden;
+
+  &::after {
+    content: '🤿';
+    position: absolute;
+    right: 20rpx;
+    bottom: -20rpx;
+    font-size: 180rpx;
+    opacity: 0.2;
+  }
+}
+
+.headerTitle {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  margin-bottom: $spacing-xs;
+  position: relative;
+  z-index: 1;
+}
+
+.headerSubtitle {
+  font-size: $font-size-sm;
+  opacity: 0.95;
+  position: relative;
+  z-index: 1;
+}
+
+.filterTabs {
+  display: flex;
+  padding: $spacing-md $page-padding;
+  gap: $spacing-sm;
+  overflow-x: auto;
+  white-space: nowrap;
+
+  @include scroll-x-container;
+}
+
+.tabItem {
+  @include scroll-x-item(auto);
+  display: inline-flex;
+  align-items: center;
+  padding: 14rpx 28rpx;
+  background: $color-bg-card;
+  border-radius: $radius-button;
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-right: $spacing-sm;
+  flex-shrink: 0;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &.active {
+    background: $color-accent;
+    color: $color-text-white;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.activityList {
+  padding: 0 $page-padding;
+  padding-bottom: 40rpx;
+}
+
+.activityCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  margin-bottom: $spacing-lg;
+  box-shadow: $shadow-card;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+  }
+}
+
+.activityImage {
+  position: relative;
+  width: 100%;
+  height: 300rpx;
+
+  image {
+    width: 100%;
+    height: 100%;
+  }
+
+  .typeTag {
+    position: absolute;
+    top: $spacing-md;
+    left: $spacing-md;
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    font-size: $font-size-xs;
+    padding: 6rpx 16rpx;
+    border-radius: $radius-xs;
+    backdrop-filter: blur(4px);
+  }
+
+  .difficultyTag {
+    position: absolute;
+    top: $spacing-md;
+    right: $spacing-md;
+    background: $color-accent;
+    color: white;
+    font-size: $font-size-xs;
+    padding: 6rpx 16rpx;
+    border-radius: $radius-xs;
+  }
+}
+
+.activityContent {
+  padding: $spacing-lg;
+}
+
+.activityTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-sm;
+}
+
+.activityDesc {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-tight;
+  margin-bottom: $spacing-md;
+  @include text-ellipsis-multi(2);
+}
+
+.activityMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+
+  .icon {
+    font-size: 24rpx;
+  }
+}
+
+.includes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-lg;
+}
+
+.includeTag {
+  font-size: $font-size-xs;
+  color: $color-primary;
+  background: $color-primary-bg;
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+}
+
+.activityFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: $spacing-md;
+  border-top: 1px solid $color-divider;
+}
+
+.priceWrap {
+  display: flex;
+  align-items: baseline;
+  gap: 4rpx;
+
+  .price {
+    font-size: $font-size-xxl;
+    font-weight: $font-weight-bold;
+    color: $color-price;
+    line-height: 1;
+  }
+
+  .unit {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+}
+
+.bookBtn {
+  @include button-reset;
+  padding: 0 $spacing-xl;
+  height: $button-height-md;
+  background: $color-accent;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  border-radius: $radius-button;
+  transition: all $transition-base;
+
+  &:active {
+    background: darken($color-accent, 10%);
+    transform: scale(0.96);
+  }
+
+  &.disabled {
+    background: $color-text-disabled;
+  }
+}
+
+.slotsInfo {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  margin-top: 4rpx;
+
+  .slots {
+    color: $color-success;
+    font-weight: $font-weight-medium;
+  }
+
+  .full {
+    color: $color-error;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.emptyState {
+  text-align: center;
+  padding: 80rpx $page-padding;
+  color: $color-text-tertiary;
+
+  .icon {
+    font-size: 80rpx;
+    margin-bottom: $spacing-md;
+  }
+
+  .text {
+    font-size: $font-size-md;
+  }
+}

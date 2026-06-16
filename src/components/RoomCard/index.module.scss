@@ -1,0 +1,116 @@
+@use '@/styles/variables.scss' as *;
+
+.roomCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  overflow: hidden;
+  box-shadow: $shadow-card;
+  margin-bottom: $spacing-md;
+  transition: all $transition-base;
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.95;
+  }
+}
+
+.roomImage {
+  width: 100%;
+  height: 320rpx;
+  display: block;
+}
+
+.roomInfo {
+  padding: $spacing-lg;
+}
+
+.roomHeader {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+  gap: $spacing-sm;
+}
+
+.roomName {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  flex: 1;
+  @include text-ellipsis;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rpx 12rpx;
+  background: $color-primary-bg;
+  color: $color-primary;
+  font-size: $font-size-xs;
+  border-radius: $radius-xs;
+  flex-shrink: 0;
+}
+
+.roomDesc {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: $line-height-tight;
+  margin-bottom: $spacing-md;
+  @include text-ellipsis-multi(2);
+}
+
+.roomMeta {
+  margin-bottom: $spacing-lg;
+}
+
+.metaItem {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.roomFooter {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+.priceWrap {
+  display: flex;
+  align-items: baseline;
+  gap: $spacing-xs;
+}
+
+.price {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  color: $color-price;
+  line-height: 1;
+}
+
+.originalPrice {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  text-decoration: line-through;
+}
+
+.priceUnit {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.availability {
+  font-size: $font-size-sm;
+  padding: 6rpx 16rpx;
+  border-radius: $radius-sm;
+  font-weight: $font-weight-medium;
+
+  &.available {
+    background: rgba(46, 204, 113, 0.1);
+    color: $color-success;
+  }
+
+  &.full {
+    background: rgba(231, 76, 60, 0.1);
+    color: $color-error;
+  }
+}

@@ -1,0 +1,111 @@
+@use '@/styles/variables.scss' as *;
+
+.statCard {
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  padding: $spacing-lg;
+  box-shadow: $shadow-card;
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  transition: all $transition-base;
+  position: relative;
+  overflow: hidden;
+
+  &:active {
+    transform: scale(0.98);
+    opacity: 0.95;
+  }
+
+  &.primary {
+    .value { color: $color-primary; }
+    &::before {
+      background: linear-gradient(135deg, rgba(0, 136, 204, 0.08) 0%, transparent 60%);
+    }
+  }
+
+  &.accent {
+    .value { color: $color-accent; }
+    &::before {
+      background: linear-gradient(135deg, rgba(255, 140, 66, 0.08) 0%, transparent 60%);
+    }
+  }
+
+  &.success {
+    .value { color: $color-success; }
+    &::before {
+      background: linear-gradient(135deg, rgba(46, 204, 113, 0.08) 0%, transparent 60%);
+    }
+  }
+
+  &.warning {
+    .value { color: $color-warning; }
+    &::before {
+      background: linear-gradient(135deg, rgba(243, 156, 18, 0.08) 0%, transparent 60%);
+    }
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 120rpx;
+    pointer-events: none;
+  }
+}
+
+.icon {
+  width: 80rpx;
+  height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40rpx;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: $radius-md;
+  flex-shrink: 0;
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  display: block;
+  margin-bottom: $spacing-xs;
+}
+
+.valueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 4rpx;
+}
+
+.value {
+  font-size: $font-size-xxl;
+  font-weight: $font-weight-bold;
+  line-height: 1.2;
+}
+
+.unit {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+}
+
+.trend {
+  margin-top: 4rpx;
+  font-size: $font-size-xs;
+
+  &.up {
+    color: $color-success;
+  }
+
+  &.down {
+    color: $color-error;
+  }
+}

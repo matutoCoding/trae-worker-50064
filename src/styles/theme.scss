@@ -1,0 +1,47 @@
+// ============================================
+// 主题配色变量 - 海岛民宿主题
+// ============================================
+
+// 品牌主题色：海洋蓝
+$color-primary: #0088cc;
+$color-primary-light: #66c2e0;
+$color-primary-dark: #006699;
+$color-primary-bg: rgba(0, 136, 204, 0.08);
+
+// 辅助色：日落橙（强调色）
+$color-accent: #ff8c42;
+$color-accent-light: #ffb07a;
+$color-accent-bg: rgba(255, 140, 66, 0.1);
+
+// 功能色
+$color-success: #2ecc71;
+$color-warning: #f39c12;
+$color-error: #e74c3c;
+$color-info: #3498db;
+
+// 背景色
+$color-bg-page: #f0f7fb;
+$color-bg-card: #ffffff;
+$color-bg-hover: #e8f4fb;
+$color-bg-section: #f7fafc;
+
+// 文本色
+$color-text-primary: #1a2b3c;
+$color-text-secondary: #4a6580;
+$color-text-tertiary: #8aa3bd;
+$color-text-disabled: #c5d4e3;
+$color-text-white: #ffffff;
+
+// 边框色
+$color-border: #d9e6f2;
+$color-divider: #eaf2fa;
+
+// 业务色
+$color-price: #ff6b35;
+$color-tag-bg: rgba(0, 136, 204, 0.1);
+$color-tag-text: #0088cc;
+
+// 渐变
+$gradient-primary: linear-gradient(135deg, #0088cc 0%, #00a8e8 100%);
+$gradient-ocean: linear-gradient(180deg, #e0f2fb 0%, #f0f7fb 100%);
+$gradient-sunset: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
